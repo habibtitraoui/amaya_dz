@@ -1,0 +1,58 @@
+{
+  "name": "amaya-premium-accessories",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AMAYA — Premium Accessories. Multi-language (AR/FR/EN) mobile accessories e-commerce platform for Algeria with retail / wholesale / super-wholesale pricing.",
+  "scripts": {
+    "dev": "node scripts/with-db.mjs dev",
+    "build": "next build",
+    "start": "node scripts/with-db.mjs start",
+    "db:up": "node scripts/db.mjs",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:seed": "tsx scripts/seed.mjs",
+    "db:reset": "tsx scripts/reset.mjs",
+    "db:generate": "node scripts/prisma-generate.mjs",
+    "api": "node scripts/with-db.mjs api",
+    "test": "node --test --experimental-strip-types --test-concurrency=1 tests/*.test.ts",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.6.0",
+    "@electric-sql/pglite-socket": "^0.3.0",
+    "@fontsource-variable/cairo": "^5.3.0",
+    "@fontsource-variable/outfit": "^5.3.0",
+    "@hookform/resolvers": "^5.2.2",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "@types/express": "^5.0.6",
+    "clsx": "^2.1.1",
+    "express": "^5.3.0",
+    "jose": "^6.2.18",
+    "lucide-react": "^0.545.0",
+    "next": "^16.4.6",
+    "pdfkit": "^0.17.2",
+    "pg": "^8.16.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-hook-form": "^7.65.0",
+    "recharts": "^3.3.0",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.16",
+    "@types/node": "^22.18.0",
+    "@types/pdfkit": "^0.17.3",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "dotenv": "^18.0.10",
+    "prisma": "^7.10.1",
+    "tailwindcss": "^4.1.16",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

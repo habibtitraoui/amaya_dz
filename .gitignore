@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+target/
+coverage/
+*.log
+.env
+.env*.local
+.pgdata/
+.vercel
+next-env.d.ts
+src/generated/
+.DS_Store
+tsconfig.tsbuildinfo
+*.tsbuildinfo
