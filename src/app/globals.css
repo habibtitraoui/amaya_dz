@@ -1,0 +1,138 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: 'Cairo Variable', 'Outfit Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* AMAYA brand palette */
+  --color-brand-50: #fff5ec;
+  --color-brand-100: #ffe7d1;
+  --color-brand-200: #ffcaa3;
+  --color-brand-300: #ffa56a;
+  --color-brand-400: #fd7d34;
+  --color-brand-500: #f56600;
+  --color-brand-600: #de5600;
+  --color-brand-700: #b84200;
+  --color-brand-800: #933507;
+  --color-brand-900: #762d0a;
+
+  --color-ink-50: #f7f7f8;
+  --color-ink-100: #eeeef1;
+  --color-ink-200: #dcdde2;
+  --color-ink-300: #b9bbc4;
+  --color-ink-400: #8d909c;
+  --color-ink-500: #6b6e7b;
+  --color-ink-600: #545764;
+  --color-ink-700: #43454f;
+  --color-ink-800: #2a2b33;
+  --color-ink-900: #17181d;
+  --color-ink-950: #0c0d10;
+
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+
+  --shadow-card: 0 1px 2px rgba(23, 24, 29, 0.04), 0 8px 24px -12px rgba(23, 24, 29, 0.12);
+  --shadow-lift: 0 2px 4px rgba(23, 24, 29, 0.05), 0 16px 40px -16px rgba(23, 24, 29, 0.22);
+  --shadow-brand: 0 10px 30px -12px rgba(245, 102, 0, 0.55);
+
+  --animate-fade-in: fade-in 0.35s ease both;
+  --animate-rise: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-ink-200);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html[dir='rtl'] body {
+    font-family: var(--font-arabic);
+  }
+
+  ::selection {
+    background-color: var(--color-brand-500);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+
+  input, select, textarea, button {
+    font-family: inherit;
+  }
+
+  /* Arabic numerals stay western for prices and quantities */
+  html[dir='rtl'] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .container-page {
+    width: 100%;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .container-page { padding-inline: 1.5rem; }
+  }
+  @media (min-width: 1024px) {
+    .container-page { padding-inline: 2rem; }
+  }
+
+  .surface {
+    background: #fff;
+    border: 1px solid var(--color-ink-100);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .brand-gradient {
+    background-image: linear-gradient(135deg, #f56600 0%, #ff8a1f 55%, #ffb04d 100%);
+  }
+
+  .brand-grid {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.22) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; }
+  @page { size: A4; margin: 12mm; }
+}
