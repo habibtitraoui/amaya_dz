@@ -230,7 +230,7 @@ export function ProductForm({
                   type="button"
                   onClick={() => setForm((c) => ({ ...c, variants: c.variants.filter((_, i) => i !== index) }))}
                   className="grid h-9 w-8 place-items-center rounded-lg text-ink-400 hover:bg-red-50 hover:text-red-600"
-                  aria-label="Remove variant"
+                  aria-label="Supprimer la variante"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -301,7 +301,7 @@ export function ProductForm({
                   type="button"
                   onClick={() => setForm((c) => ({ ...c, images: c.images.filter((_, i) => i !== index) }))}
                   className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-400 hover:bg-red-50 hover:text-red-600"
-                  aria-label="Remove image"
+                  aria-label="Supprimer l’image"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

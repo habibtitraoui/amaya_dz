@@ -2,7 +2,7 @@
   "name": "amaya-premium-accessories",
   "version": "1.0.0",
   "private": true,
-  "description": "AMAYA — Premium Accessories. Multi-language (AR/FR/EN) mobile accessories e-commerce platform for Algeria with retail / wholesale / super-wholesale pricing.",
+  "description": "AMAYA \u2014 Premium Accessories. Multi-language (AR/FR/EN) mobile accessories e-commerce platform for Algeria with retail / wholesale / super-wholesale pricing.",
   "scripts": {
     "dev": "node scripts/with-db.mjs dev",
     "build": "next build",
@@ -14,7 +14,11 @@
     "db:generate": "node scripts/prisma-generate.mjs",
     "api": "node scripts/with-db.mjs api",
     "test": "node --test --experimental-strip-types --test-concurrency=1 tests/*.test.ts",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:history": "tsx scripts/seed-history.mjs",
+    "db:cleanup": "tsx scripts/cleanup-test-data.mjs",
+    "test:acceptance": "tsx scripts/acceptance.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.6.0",

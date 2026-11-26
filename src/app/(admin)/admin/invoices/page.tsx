@@ -89,10 +89,10 @@ export default async function AdminInvoicesPage() {
                   </td>
                   <td className="px-5 py-2.5">
                     <div className="flex items-center justify-end gap-1">
-                      <Link href={`/invoices/${invoice.id}`} target="_blank" className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 hover:bg-ink-100 hover:text-ink-800" aria-label="Preview">
+                      <Link href={`/invoices/${invoice.id}`} target="_blank" className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 hover:bg-ink-100 hover:text-ink-800" aria-label="Aperçu">
                         <Printer className="h-3.5 w-3.5" />
                       </Link>
-                      <Link href={`/invoices/${invoice.id}/pdf`} target="_blank" className="grid h-7 w-7 place-items-center rounded-lg text-brand-600 hover:bg-brand-50" aria-label="PDF">
+                      <Link href={`/invoices/${invoice.id}/pdf`} target="_blank" className="grid h-7 w-7 place-items-center rounded-lg text-brand-600 hover:bg-brand-50" aria-label="Télécharger le PDF">
                         <Download className="h-3.5 w-3.5" />
                       </Link>
                     </div>

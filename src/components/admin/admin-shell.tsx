@@ -113,7 +113,7 @@ export function AdminShell({
             <p className="truncate text-[10px] text-white/40">{user.email}</p>
           </div>
           <form action={logoutAction}>
-            <button type="submit" aria-label="Sign out" className="grid h-7 w-7 place-items-center rounded-lg text-white/40 hover:bg-white/10 hover:text-white">
+            <button type="submit" aria-label="Déconnexion" className="grid h-7 w-7 place-items-center rounded-lg text-white/40 hover:bg-white/10 hover:text-white">
               <LogOut className="h-3.5 w-3.5 rtl:rotate-180" />
             </button>
           </form>
@@ -134,7 +134,7 @@ export function AdminShell({
               type="button"
               onClick={() => setOpen(false)}
               className="absolute end-3 top-4 grid h-8 w-8 place-items-center rounded-lg text-white/60 hover:bg-white/10"
-              aria-label="Close menu"
+              aria-label="Fermer le menu"
             >
               <X className="h-4 w-4" />
             </button>
@@ -149,9 +149,9 @@ export function AdminShell({
             type="button"
             onClick={() => setOpen(true)}
             className="grid h-9 w-9 place-items-center rounded-lg text-ink-600 hover:bg-ink-50 lg:hidden"
-            aria-label="Open menu"
+            aria-label="Ouvrir le menu"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-5 w-5" aria-hidden />
           </button>
           <div className="flex-1" />
           <span className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10.5px] font-bold text-emerald-700 ring-1 ring-emerald-200 sm:inline-flex">

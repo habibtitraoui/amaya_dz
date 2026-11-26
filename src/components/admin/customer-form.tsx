@@ -144,7 +144,7 @@ export function CustomerForm({ initial }: { initial: CustomerFormValues }) {
                 type="button"
                 onClick={() => { navigator.clipboard.writeText(temporary); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
                 className="grid h-8 w-8 place-items-center rounded-lg bg-white text-emerald-600 hover:bg-emerald-100"
-                aria-label="Copy"
+                aria-label="Copier le mot de passe"
               >
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
               </button>

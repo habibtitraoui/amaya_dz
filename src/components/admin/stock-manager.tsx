@@ -133,7 +133,7 @@ export function StockManager({
                             onClick={() => adjust(variant.id)}
                             disabled={pending === variant.id || !delta[variant.id]}
                             className="grid h-8 w-8 place-items-center rounded-lg bg-ink-900 text-white transition-colors hover:bg-ink-800 disabled:opacity-30"
-                            aria-label="Apply"
+                            aria-label="Appliquer l’ajustement"
                           >
                             {pending === variant.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
                           </button>

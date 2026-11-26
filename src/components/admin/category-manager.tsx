@@ -119,10 +119,10 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
                 <p className="truncate text-[10.5px] text-ink-400">/{category.slug}</p>
               </div>
               <div className="flex items-center gap-0.5">
-                <button type="button" onClick={() => toggle(category)} className="grid h-8 w-8 place-items-center rounded-lg text-ink-400 hover:bg-ink-50 hover:text-ink-700" aria-label="Toggle">
+                <button type="button" onClick={() => toggle(category)} className="grid h-8 w-8 place-items-center rounded-lg text-ink-400 hover:bg-ink-50 hover:text-ink-700" aria-label="Activer / désactiver">
                   {category.isActive ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
-                <button type="button" onClick={() => open(category)} className="grid h-8 w-8 place-items-center rounded-lg text-ink-400 hover:bg-ink-50 hover:text-brand-600" aria-label="Edit">
+                <button type="button" onClick={() => open(category)} className="grid h-8 w-8 place-items-center rounded-lg text-ink-400 hover:bg-ink-50 hover:text-brand-600" aria-label="Modifier la catégorie">
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
               </div>
