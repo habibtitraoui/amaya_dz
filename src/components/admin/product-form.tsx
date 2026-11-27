@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Loader2, Plus, Trash2, Save, AlertTriangle, ExternalLink, Upload } from 'lucide-react';
+import { Loader2, Plus, Trash2, Save, AlertTriangle, ExternalLink, Upload, Star } from 'lucide-react';
 import { saveProductAction } from '@/app/actions/admin';
 import { releaseStagedImage, stageImageFile, uploadStagedImage } from '@/lib/upload';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,8 @@ export type ProductFormValues = {
   images: { url: string; alt?: string; /** Present only for locally staged files — uploaded on submit. */ file?: File }[];
   variants: Variant[];
 };
+
+const MAX_IMAGES = 12;
 
 export function ProductForm({
   initial,
@@ -143,39 +145,64 @@ export function ProductForm({
   const marginCents =
     Math.round((Number(form.retailPrice) - Number(form.wholesalePrice)) * 100);
 
-  async function handleUpload(file: File, index: number | null) {
+  async function handleUpload(files: File | File[], index: number | null) {
+    const list = (Array.isArray(files) ? files : [files]).slice(0, MAX_IMAGES);
+    if (list.length === 0) return;
     setUploading(index ?? 'new');
     setError(null);
     try {
-      const staged = await stageImageFile(file);
-      if (!staged.ok) {
-        setError(staged.error);
-        return;
-      }
-      // No request leaves the browser here — the file is only optimized and
+      // No request leaves the browser here — files are only optimized and
       // kept in memory with a blob: preview URL until the form is submitted.
-      setForm((current) => {
-        if (index === null) {
-          return {
-            ...current,
-            images: [
-              ...current.images.filter((image) => image.url.trim()),
-              { url: staged.image.previewUrl, file: staged.image.file },
-            ],
-          };
+      if (index !== null) {
+        // Replacing a specific row: only the first picked file is used.
+        const staged = await stageImageFile(list[0]);
+        if (!staged.ok) {
+          setError(staged.error);
+          return;
         }
-        return {
+        setForm((current) => ({
           ...current,
           images: current.images.map((image, i) => {
             if (i !== index) return image;
             releaseStagedImage(image.file ? { file: image.file, previewUrl: image.url } : null);
             return { ...image, url: staged.image.previewUrl, file: staged.image.file };
           }),
-        };
-      });
+        }));
+        return;
+      }
+      // Adding new images: stage every picked file at once.
+      const results = await Promise.all(list.map((file) => stageImageFile(file)));
+      const staged = results.filter((result) => result.ok).map((result) => ({ url: result.image.previewUrl, file: result.image.file }));
+      const messages = [...new Set(results.filter((result) => !result.ok).map((result) => result.error))];
+      const existingCount = form.images.filter((image) => image.url.trim()).length;
+      const room = Math.max(0, MAX_IMAGES - existingCount);
+      const accepted = staged.slice(0, room);
+      for (const dropped of staged.slice(room)) URL.revokeObjectURL(dropped.url);
+      if (staged.length > room) messages.push(`Maximum ${MAX_IMAGES} images — ${staged.length - room} fichier(s) ignoré(s)`);
+      if (messages.length > 0) setError(messages.join(' — '));
+      if (accepted.length > 0) {
+        setForm((current) => ({
+          ...current,
+          images: [...current.images.filter((image) => image.url.trim()), ...accepted],
+        }));
+      }
     } finally {
       setUploading(null);
     }
+  }
+
+  // The first image is the one shown on the product card (sortOrder persists
+  // the order). Starring moves an image to the front, in place of the old first.
+  function setPrimary(index: number) {
+    if (index <= 0) return;
+    setForm((current) => {
+      const target = current.images[index];
+      if (!target) return current;
+      return {
+        ...current,
+        images: [target, ...current.images.filter((_, i) => i !== index)],
+      };
+    });
   }
 
   function fileInput(index: number | null) {
@@ -184,10 +211,12 @@ export function ProductForm({
         type="file"
         accept="image/webp,image/jpeg,image/png,image/avif"
         className="hidden"
+        multiple={index === null}
         onChange={(event) => {
-          const file = event.target.files?.[0];
+          const picked = Array.from(event.target.files ?? []);
           event.target.value = '';
-          if (file) void handleUpload(file, index);
+          if (picked.length === 0) return;
+          void handleUpload(index === null ? picked : picked[0], index);
         }}
       />
     );
@@ -354,11 +383,27 @@ export function ProductForm({
         </section>
 
         <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
-          <h2 className="mb-3 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">Images</h2>
+          <h2 className="mb-3 flex items-center justify-between text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">
+            Images
+            <span className="text-[10.5px] font-bold tabular-nums text-ink-300">{form.images.filter((image) => image.url.trim()).length}/{MAX_IMAGES}</span>
+          </h2>
           <div className="space-y-2">
             {form.images.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
-                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-ink-50">
+                <button
+                  type="button"
+                  onClick={() => setPrimary(index)}
+                  aria-pressed={index === 0}
+                  title={index === 0 ? 'Image de la carte produit' : 'Définir comme image de la carte produit'}
+                  aria-label={index === 0 ? 'Image de la carte produit' : 'Définir comme image de la carte produit'}
+                  className={cn(
+                    'grid h-8 w-8 shrink-0 place-items-center rounded-lg transition-colors',
+                    index === 0 ? 'text-amber-400' : 'text-ink-300 hover:bg-amber-50 hover:text-amber-500',
+                  )}
+                >
+                  <Star className={cn('h-4 w-4', index === 0 && 'fill-amber-400')} />
+                </button>
+                <div className={cn('relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-ink-50', index === 0 && 'ring-2 ring-amber-400 ring-offset-1')}>
                   {image.url && <Image src={image.url} alt="" fill sizes="40px" className="object-cover" unoptimized />}
                 </div>
                 <Input
@@ -419,13 +464,14 @@ export function ProductForm({
               )}
             >
               {uploading === 'new' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-              {uploading === 'new' ? 'Préparation…' : 'Ajouter un fichier'}
+              {uploading === 'new' ? 'Préparation…' : 'Ajouter des fichiers'}
               {fileInput(null)}
             </label>
           </div>
           <p className="mt-2 text-[10px] leading-relaxed text-ink-400">
-            Choisissez un fichier depuis votre ordinateur (optimisé en WebP, max 4 Mo) — il n’est
-            envoyé au stockage que lorsque vous cliquez sur « Enregistrer » — ou collez une URL existante.
+            Sélectionnez une ou plusieurs images (WebP optimisé, max 4 Mo chacune, jusqu’à {MAX_IMAGES}) —
+            elles ne sont envoyées au stockage que lorsque vous cliquez sur « Enregistrer ». L’image
+            marquée ★ est celle affichée sur la carte produit ; cliquez sur ★ pour la changer.
           </p>
         </section>
 
