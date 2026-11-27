@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import { Menu, X, LayoutDashboard, User } from 'lucide-react';
 import type { CurrentUser } from '@/lib/auth';
 
@@ -17,20 +18,36 @@ export function MobileMenu({
 }) {
   const [open, setOpen] = React.useState(false);
 
+  React.useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Open menu"
+        aria-label={labels.menu}
+        aria-expanded={open}
+        aria-controls="mobile-navigation"
         className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-700 transition-colors hover:bg-ink-50 lg:hidden"
       >
         <Menu className="h-5 w-5" />
       </button>
-      {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+      {open && createPortal(
+        <div id="mobile-navigation" className="fixed inset-0 z-[100] lg:hidden">
           <div className="absolute inset-0 bg-ink-950/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 start-0 flex w-[86%] max-w-xs flex-col bg-white p-5 shadow-2xl animate-rise">
+          <div className="absolute inset-y-0 start-0 flex w-[86%] max-w-xs flex-col overflow-y-auto overscroll-contain bg-white p-5 shadow-2xl animate-rise">
             <div className="mb-6 flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-ink-400">{labels.menu}</span>
               <button
@@ -74,7 +91,7 @@ export function MobileMenu({
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </>
   );
 }

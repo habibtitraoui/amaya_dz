@@ -2,14 +2,14 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Globe } from 'lucide-react';
+import { Check, Globe, Loader2 } from 'lucide-react';
 import { LOCALE_COOKIE, LOCALES, LOCALE_LABEL, LOCALE_SHORT, type Locale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export function LocaleSwitcher({ locale, compact = false }: { locale: Locale; compact?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [pending, setPending] = React.useState(false);
+  const [pending, startTransition] = React.useTransition();
   const ref = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -25,13 +25,11 @@ export function LocaleSwitcher({ locale, compact = false }: { locale: Locale; co
       setOpen(false);
       return;
     }
-    setPending(true);
     document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
     document.documentElement.lang = next;
     document.documentElement.dir = next === 'ar' ? 'rtl' : 'ltr';
     setOpen(false);
-    router.refresh();
-    window.setTimeout(() => setPending(false), 600);
+    startTransition(() => router.refresh());
   }
 
   return (
@@ -39,6 +37,8 @@ export function LocaleSwitcher({ locale, compact = false }: { locale: Locale; co
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
+        disabled={pending}
+        aria-busy={pending}
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
@@ -46,7 +46,7 @@ export function LocaleSwitcher({ locale, compact = false }: { locale: Locale; co
           pending && 'opacity-60',
         )}
       >
-        <Globe className="h-3.5 w-3.5" strokeWidth={2.2} />
+        {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Globe className="h-3.5 w-3.5" strokeWidth={2.2} />}
         {compact ? LOCALE_SHORT[locale] : LOCALE_LABEL[locale]}
       </button>
       {open && (
