@@ -6,6 +6,7 @@ import { Loader2, Save, KeyRound, Copy, Check, UserX, UserCheck } from 'lucide-r
 import { createCustomerAction, suspendCustomerAction, updateCustomerAction } from '@/app/actions/admin';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
+import type { Dictionary } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export type CustomerFormValues = {
@@ -22,7 +23,13 @@ export type CustomerFormValues = {
   status?: 'ACTIVE' | 'SUSPENDED';
 };
 
-export function CustomerForm({ initial }: { initial: CustomerFormValues }) {
+export function CustomerForm({
+  initial,
+  labels,
+}: {
+  initial: CustomerFormValues;
+  labels: Dictionary['admin']['customers']['form'];
+}) {
   const router = useRouter();
   const [form, setForm] = React.useState(initial);
   const [password, setPassword] = React.useState('');
@@ -77,38 +84,38 @@ export function CustomerForm({ initial }: { initial: CustomerFormValues }) {
     <form onSubmit={submit} className="grid gap-4 xl:grid-cols-[1fr_320px]">
       <div className="space-y-4">
         <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
-          <h2 className="mb-4 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">Identité</h2>
+          <h2 className="mb-4 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">{labels.identitySection}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nom complet" required>
+            <Field label={labels.fullName} required>
               <Input value={form.name} onChange={(e) => set('name', e.target.value)} required />
             </Field>
-            <Field label="Email (identifiant)" required>
+            <Field label={labels.emailLogin} required>
               <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required dir="ltr" />
             </Field>
-            <Field label="Téléphone">
+            <Field label={labels.phone}>
               <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} dir="ltr" placeholder="05xx xx xx xx" />
             </Field>
-            <Field label="Raison sociale">
-              <Input value={form.businessName} onChange={(e) => set('businessName', e.target.value)} placeholder="Boutique…" />
+            <Field label={labels.businessName}>
+              <Input value={form.businessName} onChange={(e) => set('businessName', e.target.value)} placeholder={labels.businessPlaceholder} />
             </Field>
           </div>
         </section>
 
         <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
-          <h2 className="mb-4 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">Adresse</h2>
+          <h2 className="mb-4 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">{labels.addressSection}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Adresse">
+            <Field label={labels.address}>
               <Input value={form.address} onChange={(e) => set('address', e.target.value)} />
             </Field>
-            <Field label="Ville">
+            <Field label={labels.city}>
               <Input value={form.city} onChange={(e) => set('city', e.target.value)} />
             </Field>
-            <Field label="Wilaya">
+            <Field label={labels.wilaya}>
               <Input value={form.wilaya} onChange={(e) => set('wilaya', e.target.value)} />
             </Field>
           </div>
           <div className="mt-4">
-            <Field label="Notes internes">
+            <Field label={labels.internalNotes}>
               <Textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={2} />
             </Field>
           </div>
@@ -117,40 +124,43 @@ export function CustomerForm({ initial }: { initial: CustomerFormValues }) {
 
       <aside className="space-y-4">
         <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
-          <h2 className="mb-3 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">Tarification</h2>
-          <Field label="Palier de prix">
+          <h2 className="mb-3 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">{labels.pricingSection}</h2>
+          <Field label={labels.priceTier}>
             <Select value={form.tier} onChange={(e) => set('tier', e.target.value as CustomerFormValues['tier'])}>
-              <option value="WHOLESALE">Gros — quantité min. 5</option>
-              <option value="SUPER_WHOLESALE">Super gros — quantité min. 10</option>
+              <option value="WHOLESALE">{labels.tierWholesaleOption}</option>
+              <option value="SUPER_WHOLESALE">{labels.tierSuperWholesaleOption}</option>
             </Select>
           </Field>
           <p className="mt-2 rounded-lg bg-ink-50 px-3 py-2 text-[10.5px] leading-relaxed text-ink-500">
-            Le palier détermine les prix et quantités minimums appliqués côté serveur à chaque commande.
+            {labels.tierExplain}
           </p>
 
           <div className="mt-4 border-t border-ink-100 pt-4">
-            <Field label={form.id ? 'Réinitialiser le mot de passe' : 'Mot de passe'} hint={form.id ? 'Laisser vide pour conserver' : 'Ou générer automatiquement'}>
-              <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={form.id ? '••••••••' : 'auto si vide'} dir="ltr" />
+            <Field
+              label={form.id ? labels.resetPassword : labels.password}
+              hint={form.id ? labels.keepPasswordHint : labels.autoPasswordHint}
+            >
+              <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={form.id ? '••••••••' : labels.autoPlaceholder} dir="ltr" />
             </Field>
           </div>
         </section>
 
         {temporary && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-            <p className="text-[10.5px] font-bold uppercase tracking-wider text-emerald-700">Mot de passe temporaire</p>
+            <p className="text-[10.5px] font-bold uppercase tracking-wider text-emerald-700">{labels.tempPasswordTitle}</p>
             <div className="mt-1.5 flex items-center gap-2">
               <code className="flex-1 rounded-lg bg-white px-2.5 py-1.5 text-[13px] font-bold text-ink-900" dir="ltr">{temporary}</code>
               <button
                 type="button"
                 onClick={() => { navigator.clipboard.writeText(temporary); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
                 className="grid h-8 w-8 place-items-center rounded-lg bg-white text-emerald-600 hover:bg-emerald-100"
-                aria-label="Copier le mot de passe"
+                aria-label={labels.copyPasswordAria}
               >
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
               </button>
             </div>
             <p className="mt-2 text-[10px] leading-relaxed text-emerald-700">
-              Communiquez-le au client — il n’est plus affiché ensuite.
+              {labels.tempPasswordNote}
             </p>
           </div>
         )}
@@ -160,7 +170,7 @@ export function CustomerForm({ initial }: { initial: CustomerFormValues }) {
         <div className="space-y-2">
           <Button type="submit" disabled={pending} className="w-full">
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {initial.id ? 'Enregistrer' : 'Créer le compte'}
+            {initial.id ? labels.save : labels.createAccount}
           </Button>
           {initial.id && (
             <button
@@ -174,13 +184,13 @@ export function CustomerForm({ initial }: { initial: CustomerFormValues }) {
               )}
             >
               {form.status === 'ACTIVE' ? <UserX className="h-3.5 w-3.5" /> : <UserCheck className="h-3.5 w-3.5" />}
-              {form.status === 'ACTIVE' ? 'Suspendre le compte' : 'Réactiver le compte'}
+              {form.status === 'ACTIVE' ? labels.suspendAccount : labels.reactivateAccount}
             </button>
           )}
           {!initial.id && (
             <p className="flex items-start gap-1.5 text-[10px] leading-relaxed text-ink-400">
               <KeyRound className="mt-0.5 h-3 w-3 shrink-0" />
-              Aucune inscription publique : seuls les comptes créés par le personnel peuvent commander au tarif de gros.
+              {labels.noPublicSignupNote}
             </p>
           )}
         </div>

@@ -15,6 +15,7 @@ import {
   YAxis,
 } from 'recharts';
 import { formatDA } from '@/lib/money';
+import type { Locale } from '@/lib/i18n';
 
 const AXIS = { fontSize: 10, fill: '#8d909c' };
 const GRID = '#eef0f3';
@@ -25,9 +26,19 @@ function compactMoney(value: number) {
   return String(Math.round(value));
 }
 
-export function OrdersAreaChart({ data, label }: { data: { day: string; revenue: number; orders: number }[]; label: string }) {
+export function OrdersAreaChart({
+  data,
+  label,
+  emptyLabel = 'Aucune donnée sur la période',
+  locale = 'fr',
+}: {
+  data: { day: string; revenue: number; orders: number }[];
+  label: string;
+  emptyLabel?: string;
+  locale?: Locale;
+}) {
   if (data.length === 0) {
-    return <div className="grid h-[220px] place-items-center text-[12px] text-ink-400">Aucune donnée sur la période</div>;
+    return <div className="grid h-[220px] place-items-center text-[12px] text-ink-400">{emptyLabel}</div>;
   }
   return (
     <div className="h-[220px] w-full" dir="ltr">
@@ -51,7 +62,7 @@ export function OrdersAreaChart({ data, label }: { data: { day: string; revenue:
           <YAxis tick={AXIS} tickLine={false} axisLine={false} tickFormatter={compactMoney} width={48} />
           <Tooltip
             contentStyle={{ borderRadius: 10, border: '1px solid #e6e7ec', fontSize: 11, boxShadow: '0 12px 30px -18px rgba(0,0,0,.3)' }}
-            formatter={(value) => [formatDA(Number(value ?? 0), 'fr'), label]}
+            formatter={(value) => [formatDA(Number(value ?? 0), locale), label]}
             labelFormatter={(value) => String(value)}
           />
           <Area type="monotone" dataKey="revenue" stroke="#f56600" strokeWidth={2.2} fill="url(#revenueGradient)" />
@@ -61,11 +72,23 @@ export function OrdersAreaChart({ data, label }: { data: { day: string; revenue:
   );
 }
 
-export function TierDonutChart({ data }: { data: { name: string; value: number; color: string }[] }) {
+export function TierDonutChart({
+  data,
+  emptyLabel = 'Aucune donnée',
+  totalLabel = 'Total',
+  currencyLabel = 'DA',
+  locale = 'fr',
+}: {
+  data: { name: string; value: number; color: string }[];
+  emptyLabel?: string;
+  totalLabel?: string;
+  currencyLabel?: string;
+  locale?: Locale;
+}) {
   const filtered = data.filter((item) => item.value > 0);
   const total = filtered.reduce((sum, item) => sum + item.value, 0);
   if (total === 0) {
-    return <div className="grid h-[170px] place-items-center text-[12px] text-ink-400">Aucune donnée</div>;
+    return <div className="grid h-[170px] place-items-center text-[12px] text-ink-400">{emptyLabel}</div>;
   }
   return (
     <div className="relative h-[170px] w-full" dir="ltr">
@@ -78,20 +101,32 @@ export function TierDonutChart({ data }: { data: { name: string; value: number; 
           </Pie>
           <Tooltip
             contentStyle={{ borderRadius: 10, border: '1px solid #e6e7ec', fontSize: 11 }}
-            formatter={(value) => formatDA(Number(value ?? 0), 'fr')}
+            formatter={(value) => formatDA(Number(value ?? 0), locale)}
           />
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[9px] font-bold uppercase tracking-wider text-ink-400">Total</span>
-        <span className="text-[13px] font-extrabold text-ink-900 tabular-nums">{compactMoney(total)} DA</span>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-ink-400">{totalLabel}</span>
+        <span className="text-[13px] font-extrabold text-ink-900 tabular-nums">
+          {compactMoney(total)} {currencyLabel}
+        </span>
       </div>
     </div>
   );
 }
 
-export function CategoryBarsChart({ data }: { data: { name: string; revenue: number }[] }) {
-  if (data.length === 0) return <p className="text-[11.5px] text-ink-400">Aucune vente sur la période</p>;
+export function CategoryBarsChart({
+  data,
+  emptyLabel = 'Aucune vente sur la période',
+  tooltipLabel = 'CA',
+  locale = 'fr',
+}: {
+  data: { name: string; revenue: number }[];
+  emptyLabel?: string;
+  tooltipLabel?: string;
+  locale?: Locale;
+}) {
+  if (data.length === 0) return <p className="text-[11.5px] text-ink-400">{emptyLabel}</p>;
   return (
     <div className="h-[190px] w-full" dir="ltr">
       <ResponsiveContainer width="100%" height="100%">
@@ -101,7 +136,7 @@ export function CategoryBarsChart({ data }: { data: { name: string; revenue: num
           <YAxis type="category" dataKey="name" tick={{ ...AXIS, fontSize: 9.5 }} tickLine={false} axisLine={false} width={104} />
           <Tooltip
             contentStyle={{ borderRadius: 10, border: '1px solid #e6e7ec', fontSize: 11 }}
-            formatter={(value) => [formatDA(Number(value ?? 0), 'fr'), 'CA']}
+            formatter={(value) => [formatDA(Number(value ?? 0), locale), tooltipLabel]}
           />
           <Bar dataKey="revenue" radius={[0, 6, 6, 0]} fill="#f56600" barSize={14} />
         </BarChart>
@@ -110,8 +145,18 @@ export function CategoryBarsChart({ data }: { data: { name: string; revenue: num
   );
 }
 
-export function MonthlyBarsChart({ data }: { data: { bucket: string; revenue: number }[] }) {
-  if (data.length === 0) return <p className="text-[12px] text-ink-400">Aucune donnée</p>;
+export function MonthlyBarsChart({
+  data,
+  emptyLabel = 'Aucune donnée',
+  tooltipLabel = 'CA',
+  locale = 'fr',
+}: {
+  data: { bucket: string; revenue: number }[];
+  emptyLabel?: string;
+  tooltipLabel?: string;
+  locale?: Locale;
+}) {
+  if (data.length === 0) return <p className="text-[12px] text-ink-400">{emptyLabel}</p>;
   return (
     <div className="h-[240px] w-full" dir="ltr">
       <ResponsiveContainer width="100%" height="100%">
@@ -119,7 +164,10 @@ export function MonthlyBarsChart({ data }: { data: { bucket: string; revenue: nu
           <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
           <XAxis dataKey="bucket" tick={AXIS} tickLine={false} axisLine={false} />
           <YAxis tick={AXIS} tickLine={false} axisLine={false} tickFormatter={compactMoney} width={52} />
-          <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e6e7ec', fontSize: 11 }} formatter={(value) => [formatDA(Number(value ?? 0), 'fr'), 'CA']} />
+          <Tooltip
+            contentStyle={{ borderRadius: 10, border: '1px solid #e6e7ec', fontSize: 11 }}
+            formatter={(value) => [formatDA(Number(value ?? 0), locale), tooltipLabel]}
+          />
           <Bar dataKey="revenue" radius={[6, 6, 0, 0]} fill="#17181d" barSize={26} />
         </BarChart>
       </ResponsiveContainer>

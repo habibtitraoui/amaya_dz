@@ -8,6 +8,7 @@ import { saveProductAction } from '@/app/actions/admin';
 import { releaseStagedImage, stageImageFile, uploadStagedImage } from '@/lib/upload';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
+import type { Dictionary, Locale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 type Variant = {
@@ -43,30 +44,40 @@ export function ProductForm({
   initial,
   categories,
   slug,
+  locale = 'fr',
+  labels,
+  productStatusLabels,
+  currencyLabel = 'DA',
 }: {
   initial: ProductFormValues;
   categories: { id: string; name: string }[];
   slug?: string;
+  locale?: Locale;
+  labels: Dictionary['admin']['products']['form'];
+  productStatusLabels: Dictionary['productStatus'];
+  currencyLabel?: string;
 }) {
   const router = useRouter();
   const [form, setForm] = React.useState<ProductFormValues>(initial);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [tab, setTab] = React.useState<'FR' | 'AR' | 'EN'>('FR');
+  const [tab, setTab] = React.useState<'FR' | 'AR' | 'EN'>(
+    locale === 'ar' ? 'AR' : locale === 'en' ? 'EN' : 'FR',
+  );
   // `null` = idle, `'new'` = staging a fresh image, number = staging a replacement for that row.
   const [uploading, setUploading] = React.useState<number | 'new' | null>(null);
 
-  const translation = (locale: 'AR' | 'FR' | 'EN') =>
-    form.translations.find((t) => t.locale === locale) ?? { locale, name: '', description: '' };
+  const translation = (code: 'AR' | 'FR' | 'EN') =>
+    form.translations.find((t) => t.locale === code) ?? { locale: code, name: '', description: '' };
 
-  function setTranslation(locale: 'AR' | 'FR' | 'EN', key: 'name' | 'description', value: string) {
+  function setTranslation(code: 'AR' | 'FR' | 'EN', key: 'name' | 'description', value: string) {
     setForm((current) => {
-      const exists = current.translations.some((t) => t.locale === locale);
+      const exists = current.translations.some((t) => t.locale === code);
       return {
         ...current,
         translations: exists
-          ? current.translations.map((t) => (t.locale === locale ? { ...t, [key]: value } : t))
-          : [...current.translations, { locale, name: '', description: '', [key]: value }],
+          ? current.translations.map((t) => (t.locale === code ? { ...t, [key]: value } : t))
+          : [...current.translations, { locale: code, name: '', description: '', [key]: value }],
       };
     });
   }
@@ -108,7 +119,7 @@ export function ProductForm({
         if (image.file) {
           const uploaded = await uploadStagedImage({ file: image.file, previewUrl: image.url });
           if (!uploaded.ok) {
-            setError(`Échec de l’envoi de l’image : ${uploaded.error}`);
+            setError(labels.uploadFailed.replace('{error}', uploaded.error));
             setPending(false);
             return;
           }
@@ -136,7 +147,7 @@ export function ProductForm({
         setError(result.error);
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Erreur');
+      setError(caught instanceof Error ? caught.message : 'Error');
     } finally {
       setPending(false);
     }
@@ -178,7 +189,13 @@ export function ProductForm({
       const room = Math.max(0, MAX_IMAGES - existingCount);
       const accepted = staged.slice(0, room);
       for (const dropped of staged.slice(room)) URL.revokeObjectURL(dropped.url);
-      if (staged.length > room) messages.push(`Maximum ${MAX_IMAGES} images — ${staged.length - room} fichier(s) ignoré(s)`);
+      if (staged.length > room) {
+        messages.push(
+          labels.maxImagesExceeded
+            .replace('{max}', String(MAX_IMAGES))
+            .replace('{dropped}', String(staged.length - room)),
+        );
+      }
       if (messages.length > 0) setError(messages.join(' — '));
       if (accepted.length > 0) {
         setForm((current) => ({
@@ -227,61 +244,61 @@ export function ProductForm({
       <div className="space-y-4">
         {/* pricing */}
         <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
-          <h2 className="mb-4 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">Prix (DA)</h2>
+          <h2 className="mb-4 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">{labels.pricesSection}</h2>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Prix détail" required hint="Min. quantité 1">
+            <Field label={labels.retailPrice} required hint={labels.retailHint}>
               <Input type="number" min="0" step="10" value={form.retailPrice} onChange={(e) => setForm((c) => ({ ...c, retailPrice: e.target.value }))} required dir="ltr" />
             </Field>
-            <Field label="Prix gros" required>
+            <Field label={labels.wholesalePrice} required>
               <Input type="number" min="0" step="10" value={form.wholesalePrice} onChange={(e) => setForm((c) => ({ ...c, wholesalePrice: e.target.value }))} required dir="ltr" />
             </Field>
-            <Field label="Prix super gros" required>
+            <Field label={labels.superWholesalePrice} required>
               <Input type="number" min="0" step="10" value={form.superWholesalePrice} onChange={(e) => setForm((c) => ({ ...c, superWholesalePrice: e.target.value }))} required dir="ltr" />
             </Field>
-            <Field label="Qté min. gros" required>
+            <Field label={labels.wholesaleMinQty} required>
               <Input type="number" min="1" value={form.wholesaleMinQty} onChange={(e) => setForm((c) => ({ ...c, wholesaleMinQty: Number(e.target.value) }))} required dir="ltr" />
             </Field>
-            <Field label="Qté min. super gros" required>
+            <Field label={labels.superWholesaleMinQty} required>
               <Input type="number" min="1" value={form.superWholesaleMinQty} onChange={(e) => setForm((c) => ({ ...c, superWholesaleMinQty: Number(e.target.value) }))} required dir="ltr" />
             </Field>
             <div className="rounded-xl bg-ink-50 px-3 py-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">Marge retail/gros</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">{labels.marginLabel}</p>
               <p className={cn('text-[15px] font-extrabold tabular-nums', marginCents >= 0 ? 'text-emerald-600' : 'text-red-600')} dir="ltr">
-                {(marginCents / 100).toFixed(2)} DA
+                {(marginCents / 100).toFixed(2)} {currencyLabel}
               </p>
             </div>
           </div>
           <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-ink-50 px-3 py-2 text-[11px] text-ink-500">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-            Toute modification de prix est enregistrée dans l’historique. Les commandes et factures existantes ne sont jamais recalculées.
+            {labels.priceHistoryNote}
           </p>
         </section>
 
         {/* translations */}
         <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">Contenu multilingue</h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">{labels.multilingualSection}</h2>
             <div className="flex gap-1 rounded-full bg-ink-100 p-0.5">
-              {(['FR', 'AR', 'EN'] as const).map((locale) => (
+              {(['FR', 'AR', 'EN'] as const).map((code) => (
                 <button
-                  key={locale}
+                  key={code}
                   type="button"
-                  onClick={() => setTab(locale)}
+                  onClick={() => setTab(code)}
                   className={cn(
                     'rounded-full px-3 py-1 text-[11px] font-bold transition-colors',
-                    tab === locale ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500',
+                    tab === code ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500',
                   )}
                 >
-                  {locale === 'FR' ? 'Français' : locale === 'AR' ? 'العربية' : 'English'}
+                  {code === 'FR' ? 'Français' : code === 'AR' ? 'العربية' : 'English'}
                 </button>
               ))}
             </div>
           </div>
           <div className={cn('space-y-3', tab === 'AR' && 'font-arabic')} dir={tab === 'AR' ? 'rtl' : 'ltr'}>
-            <Field label="Nom du produit" required={tab === 'FR'}>
+            <Field label={labels.productName} required={tab === 'FR'}>
               <Input value={translation(tab).name} onChange={(e) => setTranslation(tab, 'name', e.target.value)} required={tab === 'FR'} />
             </Field>
-            <Field label="Description">
+            <Field label={labels.description}>
               <Textarea value={translation(tab).description} onChange={(e) => setTranslation(tab, 'description', e.target.value)} rows={4} />
             </Field>
           </div>
@@ -290,49 +307,49 @@ export function ProductForm({
         {/* variants */}
         <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">Variantes (couleurs)</h2>
+            <h2 className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">{labels.variantsSection}</h2>
             <button type="button" onClick={addVariant} className="inline-flex items-center gap-1 text-[11.5px] font-bold text-brand-600 hover:underline">
-              <Plus className="h-3.5 w-3.5" /> Ajouter une couleur
+              <Plus className="h-3.5 w-3.5" /> {labels.addColor}
             </button>
           </div>
           <div className="space-y-2.5">
             {form.variants.map((variant, index) => (
               <div key={variant.id ?? `new-${index}`} className="grid gap-2 rounded-xl border border-ink-100 p-3 sm:grid-cols-[40px_1fr_1fr_1fr_90px_80px_32px] sm:items-end">
                 <div>
-                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">Couleur</label>
+                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">{labels.colorLabel}</label>
                   <input
                     type="color"
                     value={variant.colorCode}
                     onChange={(e) => setVariant(index, 'colorCode', e.target.value)}
                     className="h-9 w-full cursor-pointer rounded-lg border border-ink-200 bg-white p-0.5"
-                    aria-label="Code couleur"
+                    aria-label={labels.colorCodeAria}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">Nom FR</label>
-                  <Input value={variant.colorNameFr} onChange={(e) => setVariant(index, 'colorNameFr', e.target.value)} className="h-9 text-[12px]" />
+                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">{labels.nameFr}</label>
+                  <Input value={variant.colorNameFr} onChange={(e) => setVariant(index, 'colorNameFr', e.target.value)} className="h-9 text-[12px]" dir="ltr" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">Nom AR</label>
+                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">{labels.nameAr}</label>
                   <Input value={variant.colorNameAr} onChange={(e) => setVariant(index, 'colorNameAr', e.target.value)} className="h-9 text-[12px]" dir="rtl" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">Nom EN</label>
-                  <Input value={variant.colorNameEn} onChange={(e) => setVariant(index, 'colorNameEn', e.target.value)} className="h-9 text-[12px]" />
+                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">{labels.nameEn}</label>
+                  <Input value={variant.colorNameEn} onChange={(e) => setVariant(index, 'colorNameEn', e.target.value)} className="h-9 text-[12px]" dir="ltr" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">SKU</label>
+                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">{labels.sku}</label>
                   <Input value={variant.sku} onChange={(e) => setVariant(index, 'sku', e.target.value)} className="h-9 text-[11px]" dir="ltr" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">Stock</label>
+                  <label className="mb-1 block text-[9.5px] font-bold uppercase text-ink-400">{labels.stock}</label>
                   <Input type="number" min="0" value={variant.stockQuantity} onChange={(e) => setVariant(index, 'stockQuantity', Number(e.target.value))} className="h-9 text-[12px]" dir="ltr" />
                 </div>
                 <button
                   type="button"
                   onClick={() => setForm((c) => ({ ...c, variants: c.variants.filter((_, i) => i !== index) }))}
                   className="grid h-9 w-8 place-items-center rounded-lg text-ink-400 hover:bg-red-50 hover:text-red-600"
-                  aria-label="Supprimer la variante"
+                  aria-label={labels.deleteVariantAria}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -340,7 +357,7 @@ export function ProductForm({
             ))}
             {form.variants.length === 0 && (
               <p className="rounded-xl border border-dashed border-ink-200 py-6 text-center text-[11.5px] text-ink-400">
-                Aucune variante — ajoutez au moins une couleur.
+                {labels.noVariants}
               </p>
             )}
           </div>
@@ -349,12 +366,12 @@ export function ProductForm({
 
       <aside className="space-y-4">
         <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
-          <h2 className="mb-3 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">Informations</h2>
+          <h2 className="mb-3 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">{labels.infoSection}</h2>
           <div className="space-y-3">
-            <Field label="SKU / Référence" required>
+            <Field label={labels.skuLabel} required>
               <Input value={form.sku} onChange={(e) => setForm((c) => ({ ...c, sku: e.target.value.toUpperCase() }))} required dir="ltr" />
             </Field>
-            <Field label="Catégorie" required>
+            <Field label={labels.categoryLabel} required>
               <Select value={form.categoryId} onChange={(e) => setForm((c) => ({ ...c, categoryId: e.target.value }))} required>
                 <option value="">—</option>
                 {categories.map((category) => (
@@ -362,12 +379,12 @@ export function ProductForm({
                 ))}
               </Select>
             </Field>
-            <Field label="Statut">
+            <Field label={labels.statusLabel}>
               <Select value={form.status} onChange={(e) => setForm((c) => ({ ...c, status: e.target.value as ProductFormValues['status'] }))}>
-                <option value="AVAILABLE">Disponible</option>
-                <option value="OUT_OF_STOCK">Rupture de stock</option>
-                <option value="HIDDEN">Masqué</option>
-                <option value="ARCHIVED">Archivé</option>
+                <option value="AVAILABLE">{productStatusLabels.AVAILABLE}</option>
+                <option value="OUT_OF_STOCK">{productStatusLabels.OUT_OF_STOCK}</option>
+                <option value="HIDDEN">{productStatusLabels.HIDDEN}</option>
+                <option value="ARCHIVED">{productStatusLabels.ARCHIVED}</option>
               </Select>
             </Field>
             <label className="flex cursor-pointer items-center gap-2 text-[12px] font-medium text-ink-700">
@@ -377,15 +394,15 @@ export function ProductForm({
                 onChange={(e) => setForm((c) => ({ ...c, isFeatured: e.target.checked }))}
                 className="h-4 w-4 rounded border-ink-300 accent-brand-500"
               />
-              Produit vedette
+              {labels.featuredLabel}
             </label>
           </div>
         </section>
 
         <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
           <h2 className="mb-3 flex items-center justify-between text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">
-            Images
-            <span className="text-[10.5px] font-bold tabular-nums text-ink-300">{form.images.filter((image) => image.url.trim()).length}/{MAX_IMAGES}</span>
+            {labels.imagesSection}
+            <span className="text-[10.5px] font-bold tabular-nums text-ink-300" dir="ltr">{form.images.filter((image) => image.url.trim()).length}/{MAX_IMAGES}</span>
           </h2>
           <div className="space-y-2">
             {form.images.map((image, index) => (
@@ -394,8 +411,8 @@ export function ProductForm({
                   type="button"
                   onClick={() => setPrimary(index)}
                   aria-pressed={index === 0}
-                  title={index === 0 ? 'Image de la carte produit' : 'Définir comme image de la carte produit'}
-                  aria-label={index === 0 ? 'Image de la carte produit' : 'Définir comme image de la carte produit'}
+                  title={index === 0 ? labels.cardImageTitle : labels.setCardImageTitle}
+                  aria-label={index === 0 ? labels.cardImageTitle : labels.setCardImageTitle}
                   className={cn(
                     'grid h-8 w-8 shrink-0 place-items-center rounded-lg transition-colors',
                     index === 0 ? 'text-amber-400' : 'text-ink-300 hover:bg-amber-50 hover:text-amber-500',
@@ -428,8 +445,8 @@ export function ProductForm({
                     'grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-400 hover:bg-brand-50 hover:text-brand-600',
                     uploading === index && 'pointer-events-none opacity-50',
                   )}
-                  title="Choisir un fichier — envoyé uniquement à l’enregistrement"
-                  aria-label="Choisir une image (envoyée à l’enregistrement)"
+                  title={labels.chooseFileTitle}
+                  aria-label={labels.chooseImageAria}
                 >
                   {uploading === index ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                   {fileInput(index)}
@@ -444,7 +461,7 @@ export function ProductForm({
                     })
                   }
                   className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-400 hover:bg-red-50 hover:text-red-600"
-                  aria-label="Supprimer l’image"
+                  aria-label={labels.deleteImageAria}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -455,7 +472,7 @@ export function ProductForm({
               onClick={() => setForm((c) => ({ ...c, images: [...c.images, { url: '' }] }))}
               className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-ink-200 py-2 text-[11px] font-bold text-ink-500 hover:border-brand-300 hover:text-brand-600"
             >
-              <Plus className="h-3 w-3" /> Ajouter une image
+              <Plus className="h-3 w-3" /> {labels.addImageRow}
             </button>
             <label
               className={cn(
@@ -464,14 +481,12 @@ export function ProductForm({
               )}
             >
               {uploading === 'new' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-              {uploading === 'new' ? 'Préparation…' : 'Ajouter des fichiers'}
+              {uploading === 'new' ? labels.staging : labels.addFiles}
               {fileInput(null)}
             </label>
           </div>
           <p className="mt-2 text-[10px] leading-relaxed text-ink-400">
-            Sélectionnez une ou plusieurs images (WebP optimisé, max 4 Mo chacune, jusqu’à {MAX_IMAGES}) —
-            elles ne sont envoyées au stockage que lorsque vous cliquez sur « Enregistrer ». L’image
-            marquée ★ est celle affichée sur la carte produit ; cliquez sur ★ pour la changer.
+            {labels.imagesHelp.replace('{max}', String(MAX_IMAGES))}
           </p>
         </section>
 
@@ -480,11 +495,11 @@ export function ProductForm({
         <div className="flex flex-col gap-2">
           <Button type="submit" disabled={pending} size="md">
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {initial.id ? 'Enregistrer les modifications' : 'Créer le produit'}
+            {initial.id ? labels.saveChanges : labels.createProduct}
           </Button>
           {slug && (
             <a href={`/products/${slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-1.5 text-[11.5px] font-semibold text-ink-500 hover:text-brand-600">
-              <ExternalLink className="h-3 w-3" /> Voir sur la boutique
+              <ExternalLink className="h-3 w-3" /> {labels.viewOnStore}
             </a>
           )}
         </div>

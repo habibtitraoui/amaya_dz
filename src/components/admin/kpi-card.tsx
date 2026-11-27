@@ -32,7 +32,7 @@ export function KpiCard({
         <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-ink-400">{label}</p>
         {icon && <span className={cn('grid h-8 w-8 place-items-center rounded-xl ring-1', TONES[tone])}>{icon}</span>}
       </div>
-      <p className="mt-2.5 text-[22px] font-extrabold leading-none tracking-tight text-ink-900 tabular-nums" dir="ltr">
+      <p className="mt-2.5 text-[22px] font-extrabold leading-none tracking-tight text-ink-900 tabular-nums rtl:text-right" dir="ltr">
         {value}
       </p>
       {hint && <p className="mt-2 text-[11px] text-ink-400">{hint}</p>}

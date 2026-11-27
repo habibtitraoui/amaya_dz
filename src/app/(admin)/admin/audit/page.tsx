@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { Search, ScrollText, ShieldCheck } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { getLocale } from '@/lib/locale';
+import { getDictionary, t as interpolate } from '@/lib/i18n';
 import { formatDateTime, cn } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +26,10 @@ export default async function AdminAuditPage({
 }) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'ADMIN') redirect('/admin');
+
+  const locale = await getLocale();
+  const dict = await getDictionary(locale);
+  const copy = dict.admin.audit;
 
   const params = await searchParams;
   const search = Array.isArray(params.q) ? params.q[0] : params.q;
@@ -49,26 +55,31 @@ export default async function AdminAuditPage({
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-extrabold tracking-tight text-ink-900">Journal d’audit</h1>
-          <p className="text-[12.5px] text-ink-500">
-            Toutes les actions du personnel — en lecture seule, jamais modifiables.
-          </p>
+          <h1 className="text-[22px] font-extrabold tracking-tight text-ink-900">{copy.title}</h1>
+          <p className="text-[12.5px] text-ink-500">{copy.subtitle}</p>
         </div>
         <form action="/admin/audit" className="relative">
+          {action && <input type="hidden" name="action" value={action} />}
           <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
-          <input name="q" defaultValue={search} placeholder="Rechercher…" className="h-10 w-64 rounded-xl border border-ink-200 bg-white ps-9 pe-3 text-[12.5px] focus:border-brand-300 focus:outline-none focus:ring-4 focus:ring-brand-50" />
+          <input
+            name="q"
+            defaultValue={search}
+            placeholder={copy.searchPlaceholder}
+            aria-label={dict.common.search}
+            className="h-10 w-64 rounded-xl border border-ink-200 bg-white ps-9 pe-3 text-[12.5px] focus:border-brand-300 focus:outline-none focus:ring-4 focus:ring-brand-50"
+          />
         </form>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
         {[
-          { value: '', label: 'Tout' },
-          { value: 'order.', label: 'Commandes' },
-          { value: 'invoice', label: 'Factures' },
-          { value: 'product', label: 'Produits' },
-          { value: 'stock', label: 'Stock' },
-          { value: 'customer', label: 'Clients' },
-          { value: 'auth.', label: 'Connexions' },
+          { value: '', label: copy.tabAll },
+          { value: 'order.', label: copy.tabOrders },
+          { value: 'invoice', label: copy.tabInvoices },
+          { value: 'product', label: copy.tabProducts },
+          { value: 'stock', label: copy.tabStock },
+          { value: 'customer', label: copy.tabCustomers },
+          { value: 'auth.', label: copy.tabAuth },
         ].map((tab) => (
           <Link
             key={tab.value}
@@ -86,27 +97,29 @@ export default async function AdminAuditPage({
       <div className="rounded-2xl border border-ink-100 bg-white shadow-card">
         <div className="flex items-center gap-2 border-b border-ink-100 px-5 py-2.5">
           <ScrollText className="h-3.5 w-3.5 text-ink-400" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-400">{logs.length} entrée(s)</span>
-          <span className="ms-auto inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
-            <ShieldCheck className="h-3 w-3" /> append-only
+          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
+            {interpolate(copy.entriesCount, { count: logs.length })}
+          </span>
+          <span className="ms-auto inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600" dir="ltr">
+            <ShieldCheck className="h-3 w-3" /> {copy.appendOnly}
           </span>
         </div>
         <ul className="divide-y divide-ink-100">
           {logs.map((log) => (
             <li key={log.id} className="flex flex-wrap items-start gap-2 px-5 py-2.5">
-              <span className={cn('rounded-md px-1.5 py-0.5 font-mono text-[9.5px] font-bold ring-1 ring-inset', ACTION_TONE(log.action))}>
+              <span dir="ltr" className={cn('rounded-md px-1.5 py-0.5 font-mono text-[9.5px] font-bold ring-1 ring-inset', ACTION_TONE(log.action))}>
                 {log.action}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[12px] text-ink-800">{log.summary}</p>
                 <p className="text-[10px] text-ink-400">
-                  {formatDateTime(log.createdAt, 'fr')} · {log.actorName} · {log.entityType}
-                  {log.entityId ? ` #${log.entityId.slice(-6)}` : ''}
+                  {formatDateTime(log.createdAt, locale)} · {log.actorName} · {log.entityType}
+                  {log.entityId ? <span dir="ltr"> #{log.entityId.slice(-6)}</span> : ''}
                 </p>
               </div>
             </li>
           ))}
-          {logs.length === 0 && <li className="px-5 py-16 text-center text-[12px] text-ink-400">Aucune entrée</li>}
+          {logs.length === 0 && <li className="px-5 py-16 text-center text-[12px] text-ink-400">{copy.empty}</li>}
         </ul>
       </div>
     </div>

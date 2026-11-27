@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { getLocale } from '@/lib/locale';
+import { getDictionary } from '@/lib/i18n';
 import { SupervisorManager } from '@/components/admin/supervisor-manager';
 
 export const dynamic = 'force-dynamic';
@@ -8,6 +10,9 @@ export const dynamic = 'force-dynamic';
 export default async function AdminSupervisorsPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== 'ADMIN') redirect('/admin');
+
+  const locale = await getLocale();
+  const dict = await getDictionary(locale);
 
   const supervisors = await prisma.user.findMany({
     where: { role: 'SUPERVISOR' },
@@ -17,6 +22,9 @@ export default async function AdminSupervisorsPage() {
 
   return (
     <SupervisorManager
+      locale={locale}
+      labels={dict.admin.supervisors}
+      closeAriaLabel={dict.common.close}
       supervisors={supervisors.map((supervisor) => ({
         id: supervisor.id,
         name: supervisor.name,
