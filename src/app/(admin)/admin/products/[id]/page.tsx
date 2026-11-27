@@ -2,17 +2,20 @@ import Link from '@/components/ui/navigation-link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, History } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
+import { getLocale } from '@/lib/locale';
+import { getDictionary, translate } from '@/lib/i18n';
 import { ProductForm } from '@/components/admin/product-form';
-import { translate } from '@/lib/i18n';
 import { formatDateTime } from '@/lib/utils';
 import { formatDA } from '@/lib/money';
 
 export const dynamic = 'force-dynamic';
 
-const TIER_FR: Record<string, string> = { RETAIL: 'Détail', WHOLESALE: 'Gros', SUPER_WHOLESALE: 'Super Gros' };
-
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const locale = await getLocale();
+  const dict = await getDictionary(locale);
+  const copy = dict.admin.products;
+
   const [product, categories] = await Promise.all([
     prisma.product.findUnique({
       where: { id },
@@ -31,18 +34,22 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     <div className="space-y-4">
       <Link href="/admin/products" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 hover:text-ink-900">
         <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-        Produits
+        {copy.backToProducts}
       </Link>
       <div>
         <h1 className="text-[22px] font-extrabold tracking-tight text-ink-900">
-          {translate(product.translations, 'fr')}
+          {translate(product.translations, locale) || product.sku}
         </h1>
         <p className="text-[12.5px] text-ink-500" dir="ltr">{product.sku}</p>
       </div>
 
       <ProductForm
         slug={product.slug}
-        categories={categories.map((category) => ({ id: category.id, name: translate(category.translations, 'fr') }))}
+        locale={locale}
+        labels={copy.form}
+        productStatusLabels={dict.productStatus}
+        currencyLabel={dict.common.currency}
+        categories={categories.map((category) => ({ id: category.id, name: translate(category.translations, locale) }))}
         initial={{
           id: product.id,
           sku: product.sku,
@@ -79,21 +86,22 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       {product.priceHistory.length > 0 && (
         <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
           <h2 className="mb-3 flex items-center gap-1.5 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">
-            <History className="h-3.5 w-3.5" /> Historique des prix
+            <History className="h-3.5 w-3.5" /> {copy.priceHistory}
           </h2>
           <ul className="divide-y divide-ink-100">
             {product.priceHistory.map((entry) => (
               <li key={entry.id} className="flex items-center justify-between gap-3 py-2 text-[11.5px]">
                 <div>
                   <p className="font-semibold text-ink-800">
-                    {TIER_FR[entry.tier]} · {formatDA(entry.oldPrice ?? '0', 'fr')} → {formatDA(entry.newPrice, 'fr')}
+                    {dict.tier[entry.tier as keyof typeof dict.tier]} ·{' '}
+                    <span dir="ltr">{formatDA(entry.oldPrice ?? '0', locale)} → {formatDA(entry.newPrice, locale)}</span>
                   </p>
                   <p className="text-[10px] text-ink-400">
-                    {formatDateTime(entry.createdAt, 'fr')} · {entry.changedBy?.name ?? 'système'}
+                    {formatDateTime(entry.createdAt, locale)} · {entry.changedBy?.name ?? copy.systemActor}
                   </p>
                 </div>
-                <span className="text-[10px] text-ink-400">
-                  min {entry.oldMinQuantity ?? '—'} → {entry.newMinQuantity}
+                <span className="text-[10px] text-ink-400" dir="ltr">
+                  {copy.minAbbr} {entry.oldMinQuantity ?? '—'} → {entry.newMinQuantity}
                 </span>
               </li>
             ))}

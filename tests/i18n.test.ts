@@ -67,17 +67,25 @@ test('every dictionary is complete for the three languages', async () => {
   }
 });
 
-test('Arabic copy is actually Arabic', async () => {
+test('Arabic copy is actually Arabic across storefront and admin', async () => {
   const ar = (await import('../src/i18n/ar.ts')).default;
   assert.match(ar.nav.home, ARABIC);
   assert.match(ar.checkout.title, ARABIC);
   assert.match(ar.home.heroTitle, ARABIC);
+  assert.match(ar.admin.nav.overview, ARABIC);
+  assert.match(ar.admin.orders.title, ARABIC);
+  assert.match(ar.admin.invoices.title, ARABIC);
+  assert.match(ar.admin.settings.title, ARABIC);
 });
 
-test('the root layout applies lang + dir from the resolved locale', () => {
+test('the root layout applies lang + dir from the resolved locale and admin inherits it', () => {
   const layout = readFileSync(new URL('../src/app/layout.tsx', import.meta.url), 'utf8');
   assert.match(layout, /lang=\{locale\}/);
   assert.match(layout, /dir=\{dir\(locale\)\}/);
+
+  const adminShell = readFileSync(new URL('../src/components/admin/admin-shell.tsx', import.meta.url), 'utf8');
+  assert.ok(!/dir="ltr"\s+lang="fr"/.test(adminShell), 'admin shell must not lock dir="ltr" lang="fr"');
+  assert.match(adminShell, /LocaleSwitcher/);
 });
 
 test('invoices are pinned to French regardless of the site language', () => {
@@ -87,4 +95,8 @@ test('invoices are pinned to French regardless of the site language', () => {
   assert.match(labels, /Montant total/);
   // No hook into the locale machinery: invoices must not follow the UI.
   assert.ok(!/from '@\/lib\/i18n'/.test(labels), 'invoice labels must not depend on i18n');
+
+  const template = readFileSync(new URL('../src/lib/invoice-template.ts', import.meta.url), 'utf8');
+  assert.match(template, /<html lang="fr" dir="ltr">/);
+  assert.ok(!/from '@\/lib\/i18n'/.test(template), 'invoice template must not depend on i18n');
 });

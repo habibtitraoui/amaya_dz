@@ -1,10 +1,14 @@
 import { prisma } from '@/lib/prisma';
-import { translate } from '@/lib/i18n';
+import { getLocale } from '@/lib/locale';
+import { getDictionary, translate } from '@/lib/i18n';
 import { CategoryManager } from '@/components/admin/category-manager';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminCategoriesPage() {
+  const locale = await getLocale();
+  const dict = await getDictionary(locale);
+
   const categories = await prisma.category.findMany({
     include: { translations: true, _count: { select: { products: true } } },
     orderBy: { sortOrder: 'asc' },
@@ -12,6 +16,8 @@ export default async function AdminCategoriesPage() {
 
   return (
     <CategoryManager
+      locale={locale}
+      labels={dict.admin.categories}
       categories={categories.map((category) => ({
         id: category.id,
         slug: category.slug,
@@ -19,10 +25,10 @@ export default async function AdminCategoriesPage() {
         isActive: category.isActive,
         sortOrder: category.sortOrder,
         productCount: category._count.products,
-        nameFr: translate(category.translations, 'fr'),
-        translations: ['FR', 'AR', 'EN'].map((locale) => {
-          const found = category.translations.find((t) => t.locale === locale);
-          return { locale: locale as 'FR' | 'AR' | 'EN', name: found?.name ?? '', description: found?.description ?? '' };
+        nameLocalized: translate(category.translations, locale),
+        translations: ['FR', 'AR', 'EN'].map((code) => {
+          const found = category.translations.find((t) => t.locale === code);
+          return { locale: code as 'FR' | 'AR' | 'EN', name: found?.name ?? '', description: found?.description ?? '' };
         }),
       }))}
     />

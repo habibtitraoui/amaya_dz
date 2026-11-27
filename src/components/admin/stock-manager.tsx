@@ -2,25 +2,18 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Minus, Loader2, Boxes, History, Search } from 'lucide-react';
+import { Plus, Loader2, History, Search } from 'lucide-react';
 import { adjustStockAction } from '@/app/actions/admin';
 import { Badge } from '@/components/ui/badge';
-import { formatDateTime } from '@/lib/utils';
-import { cn } from '@/lib/utils';
-
-const MOVEMENT_LABEL: Record<string, string> = {
-  INITIAL: 'Stock initial',
-  RESTOCK: 'Réapprovisionnement',
-  ADJUSTMENT: 'Ajustement',
-  RESERVATION: 'Réservation',
-  RELEASE: 'Libération',
-  SHIPMENT: 'Expédition',
-  RETURN: 'Retour',
-};
+import type { Dictionary, Locale } from '@/lib/i18n';
+import { formatDateTime, cn } from '@/lib/utils';
 
 export function StockManager({
   variants,
   movements,
+  locale = 'fr',
+  labels,
+  searchAriaLabel = 'Search',
 }: {
   variants: {
     id: string;
@@ -33,6 +26,9 @@ export function StockManager({
     recentMovements: { id: string; type: string; quantity: number; resulting: number; createdAt: string; user: string; reason: string | null }[];
   }[];
   movements: { id: string; type: string; quantity: number; resulting: number; createdAt: string; variantSku: string; productName: string; user: string; reason: string | null }[];
+  locale?: Locale;
+  labels: Dictionary['admin']['stock'];
+  searchAriaLabel?: string;
 }) {
   const router = useRouter();
   const [search, setSearch] = React.useState('');
@@ -50,7 +46,7 @@ export function StockManager({
     setPending(variantId);
     setError(null);
     try {
-      const result = await adjustStockAction({ variantId, delta: value, reason: 'Ajustement manuel' });
+      const result = await adjustStockAction({ variantId, delta: value, reason: labels.manualReason });
       if (result.ok) {
         setDelta((current) => ({ ...current, [variantId]: '' }));
         router.refresh();
@@ -66,9 +62,9 @@ export function StockManager({
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-extrabold tracking-tight text-ink-900">Stock</h1>
+          <h1 className="text-[22px] font-extrabold tracking-tight text-ink-900">{labels.title}</h1>
           <p className="text-[12.5px] text-ink-500">
-            {variants.length} variante(s) · les réservations des commandes confirmées sont comptées à part
+            {labels.subtitle.replace('{count}', String(variants.length))}
           </p>
         </div>
         <div className="relative">
@@ -76,7 +72,8 @@ export function StockManager({
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Produit, SKU, couleur…"
+            placeholder={labels.searchPlaceholder}
+            aria-label={searchAriaLabel}
             className="h-10 w-64 rounded-xl border border-ink-200 bg-white ps-9 pe-3 text-[12.5px] focus:border-brand-300 focus:outline-none focus:ring-4 focus:ring-brand-50"
           />
         </div>
@@ -90,11 +87,11 @@ export function StockManager({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-ink-100 bg-ink-50/60 text-[10px] uppercase tracking-wider text-ink-400">
-                  <th className="px-4 py-2.5 text-start font-bold">Produit</th>
-                  <th className="px-3 py-2.5 text-center font-bold">Stock</th>
-                  <th className="px-3 py-2.5 text-center font-bold">Réservé</th>
-                  <th className="px-3 py-2.5 text-center font-bold">Disponible</th>
-                  <th className="px-4 py-2.5 text-end font-bold">Ajuster</th>
+                  <th className="px-4 py-2.5 text-start font-bold">{labels.colProduct}</th>
+                  <th className="px-3 py-2.5 text-center font-bold">{labels.colStock}</th>
+                  <th className="px-3 py-2.5 text-center font-bold">{labels.colReserved}</th>
+                  <th className="px-3 py-2.5 text-center font-bold">{labels.colAvailable}</th>
+                  <th className="px-4 py-2.5 text-end font-bold">{labels.colAdjust}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-100">
@@ -133,7 +130,7 @@ export function StockManager({
                             onClick={() => adjust(variant.id)}
                             disabled={pending === variant.id || !delta[variant.id]}
                             className="grid h-8 w-8 place-items-center rounded-lg bg-ink-900 text-white transition-colors hover:bg-ink-800 disabled:opacity-30"
-                            aria-label="Appliquer l’ajustement"
+                            aria-label={labels.applyAria}
                           >
                             {pending === variant.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
                           </button>
@@ -143,7 +140,7 @@ export function StockManager({
                   );
                 })}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-12 text-center text-[12px] text-ink-400">Aucune variante</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-12 text-center text-[12px] text-ink-400">{labels.noVariants}</td></tr>
                 )}
               </tbody>
             </table>
@@ -152,7 +149,7 @@ export function StockManager({
 
         <div className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
           <h2 className="mb-3 flex items-center gap-1.5 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">
-            <History className="h-3.5 w-3.5" /> Mouvements récents
+            <History className="h-3.5 w-3.5" /> {labels.recentMovements}
           </h2>
           <ul className="space-y-2.5">
             {movements.map((movement) => (
@@ -162,16 +159,16 @@ export function StockManager({
                     <p className="truncate text-[11.5px] font-semibold text-ink-800">{movement.productName}</p>
                     <p className="text-[10px] text-ink-400" dir="ltr">{movement.variantSku}</p>
                   </div>
-                  <span className={cn('shrink-0 text-[11.5px] font-bold tabular-nums', movement.quantity > 0 ? 'text-emerald-600' : 'text-red-600')}>
+                  <span dir="ltr" className={cn('shrink-0 text-[11.5px] font-bold tabular-nums', movement.quantity > 0 ? 'text-emerald-600' : 'text-red-600')}>
                     {movement.quantity > 0 ? '+' : ''}{movement.quantity}
                   </span>
                 </div>
                 <p className="text-[10px] text-ink-400">
-                  {MOVEMENT_LABEL[movement.type] ?? movement.type} · {formatDateTime(movement.createdAt, 'fr')} · {movement.user}
+                  {labels.movements[movement.type as keyof typeof labels.movements] ?? movement.type} · {formatDateTime(movement.createdAt, locale)} · {movement.user}
                 </p>
               </li>
             ))}
-            {movements.length === 0 && <li className="text-[11.5px] text-ink-400">Aucun mouvement</li>}
+            {movements.length === 0 && <li className="text-[11.5px] text-ink-400">{labels.noMovements}</li>}
           </ul>
         </div>
       </div>

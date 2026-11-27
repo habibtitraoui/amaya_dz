@@ -4,19 +4,11 @@ import * as React from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { NavigationIndicator } from '@/components/ui/navigation-link';
+import type { Dictionary } from '@/lib/i18n';
 
-const PRESETS = [
-  { value: 'today', label: 'Aujourd’hui' },
-  { value: 'yesterday', label: 'Hier' },
-  { value: '7d', label: '7 jours' },
-  { value: '30d', label: '30 jours' },
-  { value: 'month', label: 'Ce mois' },
-  { value: 'lastMonth', label: 'Mois dernier' },
-  { value: 'year', label: 'Cette année' },
-  { value: 'all', label: 'Tout' },
-];
+const PRESET_KEYS = ['today', 'yesterday', '7d', '30d', 'month', 'lastMonth', 'year', 'all'] as const;
 
-export function RangeFilter({ active }: { active: string }) {
+export function RangeFilter({ active, labels }: { active: string; labels: Dictionary['admin']['ranges'] }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const pathname = usePathname();
@@ -32,17 +24,17 @@ export function RangeFilter({ active }: { active: string }) {
   return (
     <div className="flex flex-wrap gap-1 rounded-full border border-ink-200 bg-white p-1">
       <NavigationIndicator pending={pending} />
-      {PRESETS.map((preset) => (
+      {PRESET_KEYS.map((value) => (
         <button
-          key={preset.value}
+          key={value}
           type="button"
-          onClick={() => select(preset.value)}
+          onClick={() => select(value)}
           className={cn(
             'rounded-full px-2.5 py-1.5 text-[11px] font-semibold transition-colors',
-            active === preset.value ? 'bg-ink-900 text-white' : 'text-ink-500 hover:bg-ink-50 hover:text-ink-800',
+            active === value ? 'bg-ink-900 text-white' : 'text-ink-500 hover:bg-ink-50 hover:text-ink-800',
           )}
         >
-          {preset.label}
+          {labels[value]}
         </button>
       ))}
     </div>

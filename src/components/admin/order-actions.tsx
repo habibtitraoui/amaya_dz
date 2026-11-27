@@ -8,26 +8,27 @@ import { nextStatuses, type OrderStatus } from '@/lib/pricing';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const LABELS: Record<OrderStatus, string> = {
-  PENDING: 'En attente',
-  CONFIRMED: 'Confirmée',
-  PREPARING: 'En préparation',
-  READY: 'Prête',
-  SHIPPED: 'Expédiée',
-  DELIVERED: 'Livrée',
-  CANCELLED: 'Annulée',
-};
-
 export function OrderActions({
   orderId,
   status,
   stockIssues,
+  statusLabels,
   labels,
 }: {
   orderId: string;
   status: string;
   stockIssues: number;
-  labels: { title: string; confirm: string; cancel: string; next: string; note: string; stockWarning: string; error: string };
+  statusLabels: Record<OrderStatus, string>;
+  labels: {
+    title: string;
+    confirm: string;
+    cancel: string;
+    next: string;
+    note: string;
+    stockWarning: string;
+    error: string;
+    finalStatus: string;
+  };
 }) {
   const router = useRouter();
   const [pending, setPending] = React.useState<string | null>(null);
@@ -59,7 +60,7 @@ export function OrderActions({
         <h2 className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-400">{labels.title}</h2>
         <p className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500">
           <PackageCheck className="h-4 w-4 text-emerald-500" />
-          {LABELS[current]} — statut final
+          {labels.finalStatus.replace('{status}', statusLabels[current])}
         </p>
       </div>
     );
@@ -104,8 +105,8 @@ export function OrderActions({
                 )}
               >
                 <span className="flex items-center gap-2">
-                  <Icon className="h-3.5 w-3.5" />
-                  {labels.next} {LABELS[option]}
+                  <Icon className={cn('h-3.5 w-3.5', Icon === ArrowRight && 'rtl:rotate-180')} />
+                  {labels.next} {statusLabels[option]}
                 </span>
                 {pending === option && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               </button>

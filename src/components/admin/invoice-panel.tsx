@@ -6,16 +6,20 @@ import { useRouter } from 'next/navigation';
 import { FileText, Loader2, Printer, Download, Plus, ShieldCheck, Info } from 'lucide-react';
 import { issueInvoiceAction } from '@/app/actions/admin';
 import { formatDA } from '@/lib/money';
+import { formatDate } from '@/lib/utils';
+import type { Locale } from '@/lib/i18n';
 
 export function InvoicePanel({
   orderId,
   orderStatus,
   invoices,
+  locale = 'fr',
   labels,
 }: {
   orderId: string;
   orderStatus: string;
   invoices: { id: string; number: string; version: number; issuedAt: string; totalAmount: string }[];
+  locale?: Locale;
   labels: {
     title: string;
     generate: string;
@@ -69,9 +73,9 @@ export function InvoicePanel({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[12px] font-bold text-ink-900" dir="ltr">{invoice.number}</p>
-                  <p className="text-[10px] text-ink-400">v{invoice.version} · {new Date(invoice.issuedAt).toLocaleDateString('fr-FR')}</p>
+                  <p className="text-[10px] text-ink-400">v{invoice.version} · {formatDate(invoice.issuedAt, locale)}</p>
                 </div>
-                <span className="text-[11.5px] font-bold text-ink-700 tabular-nums" dir="ltr">{formatDA(invoice.totalAmount, 'fr')}</span>
+                <span className="text-[11.5px] font-bold text-ink-700 tabular-nums" dir="ltr">{formatDA(invoice.totalAmount, locale)}</span>
               </div>
               <div className="mt-2 flex gap-1.5">
                 <Link

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from '@/components/ui/navigation-link';
 import { BadgeCheck, Phone, Mail, MapPin, Store, Truck, FileText, ArrowRight, ShieldCheck } from 'lucide-react';
 import { getLocale } from '@/lib/locale';
-import { getDictionary, type Locale } from '@/lib/i18n';
+import { getDictionary, translate, type Locale } from '@/lib/i18n';
 import { prisma } from '@/lib/prisma';
 import { formatDA } from '@/lib/money';
 import { TIERS, TIER_LABEL } from '@/lib/pricing';
@@ -16,16 +16,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** Illustrative price ladder: a real flagship product, priced by tier. */
-async function ladder(sku: string) {
+async function ladder(sku: string, locale: Locale) {
   const product = await prisma.product.findUnique({
     where: { sku },
     include: { translations: true, variants: { where: { isActive: true }, take: 1 } },
   });
   if (!product) return null;
-  const name =
-    product.translations.find((translation) => translation.locale === 'FR')?.name ??
-    product.translations[0]?.name ??
-    product.sku;
+  const name = translate(product.translations, locale) || product.sku;
   return {
     name,
     sku: product.sku,
@@ -132,11 +129,11 @@ export default async function ProPage() {
   const locale = await getLocale();
   const dict = await getDictionary(locale);
   const copy = COPY[locale];
-  const example = await ladder('AMY-AP-001');
+  const example = await ladder('AMY-AP-001', locale);
 
   const phone = process.env.BUSINESS_PHONE ?? '+213 555 00 00 00';
   const email = process.env.BUSINESS_EMAIL ?? 'contact@amaya.dz';
-  const address = process.env.BUSINESS_ADDRESS ?? 'Oran, Algérie';
+  const address = process.env.BUSINESS_ADDRESS ?? dict.footer.location;
 
   return (
     <div className="bg-white">
@@ -189,7 +186,7 @@ export default async function ProPage() {
                     {row.accent && <BadgeCheck className="h-3.5 w-3.5 text-brand-500" />}
                     {row.label}
                   </p>
-                  <p className="mt-2 text-2xl font-extrabold text-ink-900 tabular-nums" dir="ltr">
+                  <p className="mt-2 text-2xl font-extrabold text-ink-900 tabular-nums rtl:text-right" dir="ltr">
                     {formatDA(row.data.price, locale)}
                   </p>
                   <p className="mt-1 text-[11px] text-ink-500">

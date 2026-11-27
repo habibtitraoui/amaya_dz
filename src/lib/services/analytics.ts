@@ -1,6 +1,7 @@
 import 'server-only';
 import { prisma } from '@/lib/prisma';
 import { SALE_STATUSES } from '@/lib/pricing';
+import { translate, type Locale } from '@/lib/i18n';
 
 export type DateRange = { from: Date; to: Date };
 
@@ -85,7 +86,7 @@ async function revenueByTier(range: DateRange) {
   return map;
 }
 
-export async function getDashboardData(range: DateRange) {
+export async function getDashboardData(range: DateRange, locale: Locale = 'fr') {
   const [
     totalOrders,
     byStatus,
@@ -134,21 +135,24 @@ export async function getDashboardData(range: DateRange) {
     }),
     prisma.$queryRawUnsafe<{ name: string; revenue: number; units: number }[]>(
       `
-      SELECT COALESCE(pt."name", p."sku") AS name,
+      SELECT COALESCE(ct_loc."name", ct_fr."name", c."slug", '—') AS name,
              COALESCE(SUM(oi."lineTotal"), 0)::float AS revenue,
              COALESCE(SUM(oi."quantity"), 0)::int AS units
       FROM "OrderItem" oi
       JOIN "Order" o ON o."id" = oi."orderId"
       LEFT JOIN "Product" p ON p."id" = oi."productId"
-      LEFT JOIN "ProductTranslation" pt ON pt."productId" = p."id" AND pt."locale" = 'FR'
+      LEFT JOIN "Category" c ON c."id" = p."categoryId"
+      LEFT JOIN "CategoryTranslation" ct_loc ON ct_loc."categoryId" = c."id" AND ct_loc."locale" = $4::"LocaleCode"
+      LEFT JOIN "CategoryTranslation" ct_fr ON ct_fr."categoryId" = c."id" AND ct_fr."locale" = 'FR'
       WHERE o."createdAt" BETWEEN $1 AND $2 AND o."status" = ANY($3::"OrderStatus"[])
-      GROUP BY COALESCE(pt."name", p."sku")
+      GROUP BY COALESCE(ct_loc."name", ct_fr."name", c."slug", '—')
       ORDER BY revenue DESC
       LIMIT 6
       `,
       range.from,
       range.to,
       SALE_STATUSES,
+      locale.toUpperCase(),
     ),
     prisma.$queryRawUnsafe<{ bucket: string; revenue: number; orders: number }[]>(
       `
@@ -185,7 +189,8 @@ export async function getDashboardData(range: DateRange) {
   const productName = (id: string | null) => {
     if (!id) return '—';
     const product = products.find((p) => p.id === id);
-    return product?.translations.find((t) => t.locale === 'FR')?.name ?? product?.sku ?? '—';
+    if (!product) return '—';
+    return translate(product.translations, locale) || product.sku;
   };
 
   const stock = stockAgg[0] ?? { total_stock: 0, reserved: 0, low: 0, out: 0 };

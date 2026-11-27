@@ -22,6 +22,8 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
+import { LocaleSwitcher } from '@/components/storefront/locale-switcher';
+import type { Dictionary, Locale } from '@/lib/i18n';
 import { cn, initials } from '@/lib/utils';
 
 type Permissions = {
@@ -35,25 +37,37 @@ type Permissions = {
   viewReports: boolean;
 };
 
-const NAV: { href: string; label: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; permission: string | null; exact?: boolean }[] = [
-  { href: '/admin', label: 'Vue d’ensemble', icon: LayoutDashboard, permission: null, exact: true },
-  { href: '/admin/orders', label: 'Commandes', icon: ShoppingCart, permission: 'manageOrders' },
-  { href: '/admin/invoices', label: 'Factures', icon: FileText, permission: 'issueInvoices' },
-  { href: '/admin/products', label: 'Produits', icon: Package, permission: 'manageProducts' },
-  { href: '/admin/categories', label: 'Catégories', icon: FolderTree, permission: 'manageCategories' },
-  { href: '/admin/stock', label: 'Stock', icon: Boxes, permission: 'manageStock' },
-  { href: '/admin/customers', label: 'Clients', icon: Users, permission: 'manageCustomers' },
-  { href: '/admin/reports', label: 'Rapports', icon: BarChart3, permission: 'viewReports' },
-  { href: '/admin/supervisors', label: 'Superviseurs', icon: Shield, permission: 'admin' },
-  { href: '/admin/settings', label: 'Paramètres', icon: Settings, permission: 'admin' },
-  { href: '/admin/audit', label: 'Journal', icon: ScrollText, permission: 'audit' },
+type NavKey = keyof Dictionary['admin']['nav'];
+
+const NAV: {
+  href: string;
+  key: NavKey;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  permission: string | null;
+  exact?: boolean;
+}[] = [
+  { href: '/admin', key: 'overview', icon: LayoutDashboard, permission: null, exact: true },
+  { href: '/admin/orders', key: 'orders', icon: ShoppingCart, permission: 'manageOrders' },
+  { href: '/admin/invoices', key: 'invoices', icon: FileText, permission: 'issueInvoices' },
+  { href: '/admin/products', key: 'products', icon: Package, permission: 'manageProducts' },
+  { href: '/admin/categories', key: 'categories', icon: FolderTree, permission: 'manageCategories' },
+  { href: '/admin/stock', key: 'stock', icon: Boxes, permission: 'manageStock' },
+  { href: '/admin/customers', key: 'customers', icon: Users, permission: 'manageCustomers' },
+  { href: '/admin/reports', key: 'reports', icon: BarChart3, permission: 'viewReports' },
+  { href: '/admin/supervisors', key: 'supervisors', icon: Shield, permission: 'admin' },
+  { href: '/admin/settings', key: 'settings', icon: Settings, permission: 'admin' },
+  { href: '/admin/audit', key: 'audit', icon: ScrollText, permission: 'audit' },
 ];
 
 export function AdminShell({
+  locale,
+  labels,
   user,
   permissions,
   children,
 }: {
+  locale: Locale;
+  labels: { nav: Dictionary['admin']['nav']; shell: Dictionary['admin']['shell'] };
   user: { name: string; email: string; role: 'ADMIN' | 'SUPERVISOR' | 'CUSTOMER' };
   permissions: Permissions;
   children: React.ReactNode;
@@ -73,7 +87,7 @@ export function AdminShell({
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-white/10 px-5">
         <Image src="/brand/amaya-logo-white.png" alt="AMAYA" width={1600} height={237} className="h-6 w-auto" />
         <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/70">
-          {user.role === 'ADMIN' ? 'Admin' : 'Super'}
+          {user.role === 'ADMIN' ? labels.shell.roleAdmin : labels.shell.roleSupervisor}
         </span>
       </div>
 
@@ -91,7 +105,7 @@ export function AdminShell({
               )}
             >
               <item.icon className="h-4 w-4 shrink-0" strokeWidth={2.1} />
-              {item.label}
+              {labels.nav[item.key]}
             </Link>
           );
         })}
@@ -103,7 +117,7 @@ export function AdminShell({
           className="mb-2 flex items-center gap-2 rounded-xl px-3 py-2 text-[11.5px] font-medium text-white/50 transition-colors hover:bg-white/5 hover:text-white"
         >
           <ExternalLink className="h-3.5 w-3.5" />
-          Voir la boutique
+          {labels.shell.viewStore}
         </Link>
         <div className="flex items-center gap-2.5 rounded-xl bg-white/5 p-2.5">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-500 text-[11px] font-bold text-white">
@@ -111,10 +125,10 @@ export function AdminShell({
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[11.5px] font-semibold text-white">{user.name}</p>
-            <p className="truncate text-[10px] text-white/40">{user.email}</p>
+            <p className="truncate text-[10px] text-white/40" dir="ltr">{user.email}</p>
           </div>
           <form action={logoutAction}>
-            <button type="submit" aria-label="Déconnexion" className="grid h-7 w-7 place-items-center rounded-lg text-white/40 hover:bg-white/10 hover:text-white">
+            <button type="submit" aria-label={labels.shell.logout} className="grid h-7 w-7 place-items-center rounded-lg text-white/40 hover:bg-white/10 hover:text-white">
               <LogOut className="h-3.5 w-3.5 rtl:rotate-180" />
             </button>
           </form>
@@ -124,7 +138,7 @@ export function AdminShell({
   );
 
   return (
-    <div className="min-h-dvh bg-ink-50" dir="ltr" lang="fr">
+    <div className="min-h-dvh bg-ink-50">
       <aside className="fixed inset-y-0 start-0 z-40 hidden w-60 bg-ink-950 lg:block">{sidebar}</aside>
 
       {open && (
@@ -135,7 +149,7 @@ export function AdminShell({
               type="button"
               onClick={() => setOpen(false)}
               className="absolute end-3 top-4 grid h-8 w-8 place-items-center rounded-lg text-white/60 hover:bg-white/10"
-              aria-label="Fermer le menu"
+              aria-label={labels.shell.closeMenu}
             >
               <X className="h-4 w-4" />
             </button>
@@ -150,17 +164,18 @@ export function AdminShell({
             type="button"
             onClick={() => setOpen(true)}
             className="grid h-9 w-9 place-items-center rounded-lg text-ink-600 hover:bg-ink-50 lg:hidden"
-            aria-label="Ouvrir le menu"
+            aria-label={labels.shell.openMenu}
           >
             <Menu className="h-5 w-5" aria-hidden />
           </button>
           <div className="flex-1" />
           <span className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10.5px] font-bold text-emerald-700 ring-1 ring-emerald-200 sm:inline-flex">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            En ligne
+            {labels.shell.online}
           </span>
+          <LocaleSwitcher locale={locale} compact />
           <Link href="/" className="text-[11.5px] font-semibold text-ink-500 hover:text-brand-600 lg:hidden">
-            Boutique
+            {labels.shell.storeShort}
           </Link>
         </header>
         <main id="main" className="p-4 sm:p-6">{children}</main>

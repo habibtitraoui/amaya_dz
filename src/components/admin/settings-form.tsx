@@ -5,63 +5,67 @@ import { useRouter } from 'next/navigation';
 import { Check, Image as ImageIcon, Loader2, Save, Upload } from 'lucide-react';
 import { Field, Input } from '@/components/ui/field';
 import { Button } from '@/components/ui/button';
+import type { Dictionary } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { releaseStagedImage, stageImageFile, uploadStagedImage, type StagedImage } from '@/lib/upload';
 
-type Section = {
+type SectionField = {
   key: string;
   label: string;
   hint?: string;
   type?: 'text' | 'number' | 'image';
+  ltr?: boolean;
 };
 
-const SECTIONS: { title: string; description: string; fields: Section[] }[] = [
-  {
-    title: 'Page d’accueil',
-    description: 'Visuel affiché dans la bannière principale de la boutique.',
-    fields: [
-      {
-        key: 'hero.image',
-        label: 'Image de bannière',
-        type: 'image',
-        hint: 'Choisissez un visuel (recommandé : carré, 1200 px) ou collez une URL — envoyé au stockage à l’enregistrement.',
-      },
-    ],
-  },
-  {
-    title: 'Livraison',
-    description: 'Le seuil de gratuité s’applique au sous-total hors livraison.',
-    fields: [
-      { key: 'delivery.fee', label: 'Frais de livraison (DA)', type: 'number' },
-      { key: 'delivery.freeThreshold', label: 'Seuil livraison gratuite (DA)', type: 'number' },
-    ],
-  },
-  {
-    title: 'Quantités minimums',
-    description: 'Valeurs par défaut ; chaque produit peut avoir son propre minimum.',
-    fields: [
-      { key: 'wholesale.minQty', label: 'Minimum grossiste', type: 'number' },
-      { key: 'superWholesale.minQty', label: 'Minimum super grossiste', type: 'number' },
-    ],
-  },
-  {
-    title: 'Entreprise (factures)',
-    description: 'Ces informations apparaissent en français en en-tête de chaque facture.',
-    fields: [
-      { key: 'company.name', label: 'Raison sociale' },
-      { key: 'company.address', label: 'Adresse' },
-      { key: 'company.phone', label: 'Téléphone' },
-      { key: 'company.email', label: 'Email' },
-      { key: 'company.rc', label: 'Registre de commerce' },
-      { key: 'company.nif', label: 'NIF' },
-      { key: 'company.ai', label: 'Article d’imposition' },
-      { key: 'company.bank', label: 'Coordonnées bancaires' },
-    ],
-  },
-];
+function buildSections(labels: Dictionary['admin']['settings']): { title: string; description: string; fields: SectionField[] }[] {
+  return [
+    {
+      title: labels.homeSection,
+      description: labels.homeDescription,
+      fields: [
+        {
+          key: 'hero.image',
+          label: labels.heroImageLabel,
+          type: 'image',
+          hint: labels.heroImageHint,
+        },
+      ],
+    },
+    {
+      title: labels.deliverySection,
+      description: labels.deliveryDescription,
+      fields: [
+        { key: 'delivery.fee', label: labels.deliveryFee, type: 'number', ltr: true },
+        { key: 'delivery.freeThreshold', label: labels.deliveryFreeThreshold, type: 'number', ltr: true },
+      ],
+    },
+    {
+      title: labels.minQtySection,
+      description: labels.minQtyDescription,
+      fields: [
+        { key: 'wholesale.minQty', label: labels.wholesaleMinQty, type: 'number', ltr: true },
+        { key: 'superWholesale.minQty', label: labels.superWholesaleMinQty, type: 'number', ltr: true },
+      ],
+    },
+    {
+      title: labels.companySection,
+      description: labels.companyDescription,
+      fields: [
+        { key: 'company.name', label: labels.companyName },
+        { key: 'company.address', label: labels.companyAddress },
+        { key: 'company.phone', label: labels.companyPhone, ltr: true },
+        { key: 'company.email', label: labels.companyEmail, ltr: true },
+        { key: 'company.rc', label: labels.companyRc, ltr: true },
+        { key: 'company.nif', label: labels.companyNif, ltr: true },
+        { key: 'company.ai', label: labels.companyAi, ltr: true },
+        { key: 'company.bank', label: labels.companyBank, ltr: true },
+      ],
+    },
+  ];
+}
 
 /**
- * Image setting: preview + "Téléverser" button. Picking a file only stages it
+ * Image setting: preview + upload button. Picking a file only stages it
  * locally (optimized + blob preview) — the file is uploaded to Object Storage
  * when the whole form is submitted, never on selection. Pasting a URL works too.
  */
@@ -71,6 +75,7 @@ function ImageField({
   value,
   staging,
   error,
+  labels,
   onChange,
   onPickFile,
   onClear,
@@ -80,6 +85,7 @@ function ImageField({
   value: string;
   staging: boolean;
   error: string | null;
+  labels: Pick<Dictionary['admin']['settings'], 'urlPlaceholder' | 'staging' | 'chooseFile' | 'remove' | 'deferredUploadNote'>;
   onChange: (value: string) => void;
   onPickFile: (file: File) => void;
   onClear: () => void;
@@ -103,7 +109,7 @@ function ImageField({
               id={inputId}
               value={value}
               onChange={(event) => onChange(event.target.value)}
-              placeholder="https://… ou /brand/…"
+              placeholder={labels.urlPlaceholder}
               dir="ltr"
             />
             <div className="flex items-center gap-3">
@@ -118,7 +124,7 @@ function ImageField({
                 ) : (
                   <Upload className="h-3.5 w-3.5" />
                 )}
-                {staging ? 'Préparation…' : 'Choisir un fichier'}
+                {staging ? labels.staging : labels.chooseFile}
                 <input
                   type="file"
                   accept="image/webp,image/jpeg,image/png,image/avif"
@@ -137,11 +143,11 @@ function ImageField({
                   onClick={onClear}
                   className="text-[11.5px] font-semibold text-ink-400 hover:text-red-600"
                 >
-                  Retirer
+                  {labels.remove}
                 </button>
               )}
             </div>
-            <p className="text-[10.5px] text-ink-400">Le fichier est envoyé au stockage uniquement lors de l’enregistrement.</p>
+            <p className="text-[10.5px] text-ink-400">{labels.deferredUploadNote}</p>
             {error && <p className="text-[11.5px] text-red-600">{error}</p>}
           </div>
         </div>
@@ -150,11 +156,18 @@ function ImageField({
   );
 }
 
-export function SettingsForm({ values }: { values: Record<string, unknown> }) {
+export function SettingsForm({
+  values,
+  labels,
+}: {
+  values: Record<string, unknown>;
+  labels: Dictionary['admin']['settings'];
+}) {
   const router = useRouter();
+  const sections = React.useMemo(() => buildSections(labels), [labels]);
   const [draft, setDraft] = React.useState<Record<string, string>>(
     Object.fromEntries(
-      SECTIONS.flatMap((section) =>
+      sections.flatMap((section) =>
         section.fields.map((field) => [
           field.key,
           values[field.key] === undefined || values[field.key] === null ? '' : String(values[field.key]),
@@ -233,7 +246,7 @@ export function SettingsForm({ values }: { values: Record<string, unknown> }) {
       for (const [key, staged] of Object.entries(stagedImages)) {
         const uploaded = await uploadStagedImage(staged);
         if (!uploaded.ok) {
-          setError(`Échec de l’envoi de l’image : ${uploaded.error}`);
+          setError(labels.uploadFailed.replace('{error}', uploaded.error));
           setPending(false);
           return;
         }
@@ -261,7 +274,7 @@ export function SettingsForm({ values }: { values: Record<string, unknown> }) {
 
   return (
     <form onSubmit={submit} className="max-w-3xl space-y-4">
-      {SECTIONS.map((section) => (
+      {sections.map((section) => (
         <section key={section.title} className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
           <h2 className="text-[13px] font-extrabold text-ink-900">{section.title}</h2>
           <p className="mb-4 text-[11px] text-ink-400">{section.description}</p>
@@ -275,6 +288,7 @@ export function SettingsForm({ values }: { values: Record<string, unknown> }) {
                   value={draft[field.key] ?? ''}
                   staging={stagingKey === field.key}
                   error={fieldErrors[field.key] ?? null}
+                  labels={labels}
                   onChange={(value) => typeImageUrl(field.key, value)}
                   onPickFile={(file) => void pickImage(field.key, file)}
                   onClear={() => clearImage(field.key)}
@@ -285,7 +299,7 @@ export function SettingsForm({ values }: { values: Record<string, unknown> }) {
                     type={field.type === 'number' ? 'number' : 'text'}
                     value={draft[field.key] ?? ''}
                     onChange={(event) => setDraft({ ...draft, [field.key]: event.target.value })}
-                    dir={field.type === 'number' ? 'ltr' : undefined}
+                    dir={field.ltr ? 'ltr' : undefined}
                   />
                 </Field>
               ),
@@ -299,11 +313,11 @@ export function SettingsForm({ values }: { values: Record<string, unknown> }) {
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Enregistrer les paramètres
+          {labels.saveSettings}
         </Button>
         {saved && (
           <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-emerald-600">
-            <Check className="h-3.5 w-3.5" /> Enregistré
+            <Check className="h-3.5 w-3.5" /> {labels.saved}
           </span>
         )}
       </div>

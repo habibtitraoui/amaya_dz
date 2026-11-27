@@ -122,7 +122,7 @@ export default async function AccountPage() {
               businessName: dict.account.businessName,
               address: dict.common.address,
               city: dict.common.city,
-              wilaya: dict.common.city,
+              wilaya: dict.common.wilaya,
               save: dict.common.save,
               saving: dict.common.saving,
               updated: dict.account.profileUpdated,
