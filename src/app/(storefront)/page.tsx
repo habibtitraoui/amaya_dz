@@ -15,6 +15,7 @@ import { getLocale } from '@/lib/locale';
 import { getDictionary, t as interpolate } from '@/lib/i18n';
 import { getTier } from '@/lib/auth';
 import { getHomepageData } from '@/lib/services/catalog';
+import { getHeroImage } from '@/lib/settings';
 import { ProductCard, ProductGrid } from '@/components/storefront/product-card';
 import { ButtonLink } from '@/components/ui/button';
 import { SectionHeading } from '@/components/storefront/section-heading';
@@ -26,7 +27,7 @@ export default async function HomePage() {
   const locale = await getLocale();
   const dict = await getDictionary(locale);
   const tier = await getTier();
-  const data = await getHomepageData(locale, tier);
+  const [data, heroImage] = await Promise.all([getHomepageData(locale, tier), getHeroImage()]);
 
   const cardLabels = {
     outOfStock: dict.product.outOfStock,
@@ -95,7 +96,7 @@ export default async function HomePage() {
             <div className="relative mx-auto aspect-square w-full max-w-md overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 shadow-[0_40px_100px_-30px_rgba(245,102,0,0.6)]">
               <div className="absolute inset-0 brand-grid opacity-30" />
               <Image
-                src="/products/airpods-pro-white.jpg"
+                src={heroImage}
                 alt="AMAYA premium wireless earbuds"
                 fill
                 priority

@@ -4,9 +4,94 @@ import { PrismaClient } from '../src/generated/prisma/client.ts';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { randomBytes, scrypt as scryptCb } from 'node:crypto';
 import { promisify } from 'node:util';
+import { copyFile, mkdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 const scrypt = promisify(scryptCb);
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:5432/amaya';
+
+/**
+ * Catalog artwork now lives in `assets/catalog/**` (seed masters, outside
+ * `public/`). The seed uploads each master to Neon Object Storage and stores
+ * the returned public URL, matching what the admin UI produces.
+ *
+ * Without storage credentials — or when `SEED_ASSET_MODE=public` — every
+ * reference is copied into the local `public/` folder instead, so a bare
+ * `npm run dev` (embedded PGlite, no Neon project) still renders images.
+ */
+const ASSET_ROOT = path.join(process.cwd(), 'assets', 'catalog');
+const CONTENT_TYPES = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+};
+const LEGACY_REFERENCES = [
+  ...new Set(
+    // Every `/products/…` and `/categories/…` path the demo data mentions.
+    (await readFile(new URL(import.meta.url), 'utf8')).match(
+      /\/(?:products|categories)\/[A-Za-z0-9._-]+\.(?:jpg|jpeg|png|webp|avif)/g,
+    ) ?? [],
+  ),
+];
+
+const storageEndpoint = process.env.AWS_ENDPOINT_URL_S3?.replace(/\/+$/, '');
+const storageBucket = process.env.NEON_STORAGE_BUCKET;
+const assetMode =
+  process.env.SEED_ASSET_MODE === 'public' || !storageEndpoint || !storageBucket
+    ? 'public'
+    : 'storage';
+
+const s3 =
+  assetMode === 'storage'
+    ? new S3Client({
+        region: process.env.AWS_REGION || 'eu-central-1',
+        endpoint: storageEndpoint,
+        forcePathStyle: true,
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
+        },
+      })
+    : null;
+
+/** Legacy reference → URL persisted in the database. */
+const assetUrls = new Map();
+
+async function publishAssets() {
+  if (assetMode === 'public') {
+    console.log('[seed] storage not configured — copying catalog art into public/ for local use.');
+    for (const reference of LEGACY_REFERENCES) {
+      const [, dir, file] = /^\/(products|categories)\/(.+)$/.exec(reference);
+      const target = path.join(process.cwd(), 'public', dir, file);
+      await mkdir(path.dirname(target), { recursive: true });
+      await copyFile(path.join(ASSET_ROOT, dir, file), target);
+      assetUrls.set(reference, reference);
+    }
+    return;
+  }
+
+  console.log(`[seed] uploading ${LEGACY_REFERENCES.length} catalog images to object storage…`);
+  for (const reference of LEGACY_REFERENCES) {
+    const [, dir, file] = /^\/(products|categories)\/(.+)$/.exec(reference);
+    const key = `catalog/${dir}/${file}`;
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: storageBucket,
+        Key: key,
+        Body: await readFile(path.join(ASSET_ROOT, dir, file)),
+        ContentType: CONTENT_TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream',
+        CacheControl: 'public, max-age=31536000, immutable',
+      }),
+    );
+    assetUrls.set(reference, `${storageEndpoint}/${storageBucket}/${key}`);
+  }
+}
+
+/** Resolve a demo reference to its published URL (falls back to the raw path). */
+const asset = (reference) => assetUrls.get(reference) ?? reference;
 
 async function hash(password) {
   const salt = randomBytes(16);
@@ -18,10 +103,10 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATA
 
 const money = (n) => Number(n).toFixed(2);
 
-const CATEGORIES = [
+const buildCategories = () => [
   {
     slug: 'airpods',
-    image: '/categories/airpods.jpg',
+    image: asset('/categories/airpods.jpg'),
     names: { AR: 'سماعات لاسلكية', FR: 'Écouteurs sans fil', EN: 'Wireless earbuds' },
     descriptions: {
       AR: 'سماعات لاسلكية بجودة صوت عالية وعزل ضجيج.',
@@ -31,7 +116,7 @@ const CATEGORIES = [
   },
   {
     slug: 'chargers',
-    image: '/categories/chargers.jpg',
+    image: asset('/categories/chargers.jpg'),
     names: { AR: 'شواحن', FR: 'Chargeurs', EN: 'Chargers' },
     descriptions: {
       AR: 'شواحن سريعة وآمنة لكل الهواتف.',
@@ -41,7 +126,7 @@ const CATEGORIES = [
   },
   {
     slug: 'cables',
-    image: '/categories/cables.jpg',
+    image: asset('/categories/cables.jpg'),
     names: { AR: 'كوابل', FR: 'Câbles', EN: 'Cables' },
     descriptions: {
       AR: 'كوابل شحن ونقل بيانات متينة.',
@@ -51,7 +136,7 @@ const CATEGORIES = [
   },
   {
     slug: 'cases',
-    image: '/categories/cases.jpg',
+    image: asset('/categories/cases.jpg'),
     names: { AR: 'أغطية الهواتف', FR: 'Coques', EN: 'Phone cases' },
     descriptions: {
       AR: 'حماية أنيقة لهاتفك.',
@@ -61,7 +146,7 @@ const CATEGORIES = [
   },
   {
     slug: 'screen-protectors',
-    image: '/categories/screen.jpg',
+    image: asset('/categories/screen.jpg'),
     names: { AR: 'واقيات الشاشة', FR: 'Protections d’écran', EN: 'Screen protectors' },
     descriptions: {
       AR: 'زجاج مقسّى ضد الصدمات والخدوش.',
@@ -71,7 +156,7 @@ const CATEGORIES = [
   },
   {
     slug: 'power-banks',
-    image: '/categories/powerbank.jpg',
+    image: asset('/categories/powerbank.jpg'),
     names: { AR: 'بطاريات متنقلة', FR: 'Batteries externes', EN: 'Power banks' },
     descriptions: {
       AR: 'طاقة احتياطية أينما كنت.',
@@ -81,7 +166,7 @@ const CATEGORIES = [
   },
   {
     slug: 'headphones',
-    image: '/categories/headphones.jpg',
+    image: asset('/categories/headphones.jpg'),
     names: { AR: 'سماعات رأس', FR: 'Casques', EN: 'Headphones' },
     descriptions: {
       AR: 'صوت نقي منخفض الجهير وعزل ممتاز.',
@@ -91,7 +176,7 @@ const CATEGORIES = [
   },
   {
     slug: 'accessories',
-    image: '/categories/accessories.jpg',
+    image: asset('/categories/accessories.jpg'),
     names: { AR: 'إكسسوارات', FR: 'Accessoires', EN: 'Accessories' },
     descriptions: {
       AR: 'كل ما تحتاجه لهاتفك.',
@@ -101,7 +186,7 @@ const CATEGORIES = [
   },
 ];
 
-const PRODUCTS = [
+const buildProducts = () => [
   {
     sku: 'AMY-AP-001',
     category: 'airpods',
@@ -116,12 +201,12 @@ const PRODUCTS = [
       EN: 'Active noise cancellation, spatial audio and a wireless charging case. Up to 30 hours with the case.',
     },
     retail: 6500, wholesale: 5800, superWholesale: 5200, wMin: 5, sMin: 10,
-    images: ['/products/airpods-pro-white.jpg', '/products/airpods-pro-black.jpg', '/products/airpods-pro-pink.jpg'],
+    images: [asset('/products/airpods-pro-white.jpg'), asset('/products/airpods-pro-black.jpg'), asset('/products/airpods-pro-pink.jpg')],
     featured: true,
     variants: [
-      { fr: 'Blanc', ar: 'أبيض', en: 'White', code: '#F2F2F2', stock: 294, image: '/products/airpods-pro-white.jpg' },
-      { fr: 'Noir', ar: 'أسود', en: 'Black', code: '#1A1A1A', stock: 189, image: '/products/airpods-pro-black.jpg' },
-      { fr: 'Rose', ar: 'وردي', en: 'Pink', code: '#F3C6D4', stock: 60, image: '/products/airpods-pro-pink.jpg' },
+      { fr: 'Blanc', ar: 'أبيض', en: 'White', code: '#F2F2F2', stock: 294, image: asset('/products/airpods-pro-white.jpg') },
+      { fr: 'Noir', ar: 'أسود', en: 'Black', code: '#1A1A1A', stock: 189, image: asset('/products/airpods-pro-black.jpg') },
+      { fr: 'Rose', ar: 'وردي', en: 'Pink', code: '#F3C6D4', stock: 60, image: asset('/products/airpods-pro-pink.jpg') },
     ],
   },
   {
@@ -138,10 +223,10 @@ const PRODUCTS = [
       EN: 'Compact 20W wall charger with Power Delivery. Works with all iPhone and Android phones.',
     },
     retail: 1200, wholesale: 950, superWholesale: 800, wMin: 10, sMin: 25,
-    images: ['/products/charger-20w.jpg'],
+    images: [asset('/products/charger-20w.jpg')],
     featured: true,
     variants: [
-      { fr: 'Blanc', ar: 'أبيض', en: 'White', code: '#FFFFFF', stock: 840, image: '/products/charger-20w.jpg' },
+      { fr: 'Blanc', ar: 'أبيض', en: 'White', code: '#FFFFFF', stock: 840, image: asset('/products/charger-20w.jpg') },
     ],
   },
   {
@@ -158,9 +243,9 @@ const PRODUCTS = [
       EN: 'Tangle-proof braided nylon cable, 60W charging and data transfer up to 480 Mbps.',
     },
     retail: 900, wholesale: 650, superWholesale: 520, wMin: 20, sMin: 50,
-    images: ['/products/cable-usbc-braided.jpg'],
+    images: [asset('/products/cable-usbc-braided.jpg')],
     variants: [
-      { fr: 'Gris graphite', ar: 'رمادي', en: 'Graphite', code: '#4A4E57', stock: 2100, image: '/products/cable-usbc-braided.jpg' },
+      { fr: 'Gris graphite', ar: 'رمادي', en: 'Graphite', code: '#4A4E57', stock: 2100, image: asset('/products/cable-usbc-braided.jpg') },
     ],
   },
   {
@@ -177,10 +262,10 @@ const PRODUCTS = [
       EN: 'Anti-yellowing clear case with a MagSafe magnetic ring. Full edge protection.',
     },
     retail: 2500, wholesale: 1900, superWholesale: 1600, wMin: 10, sMin: 30,
-    images: ['/products/case-clear-magsafe.jpg'],
+    images: [asset('/products/case-clear-magsafe.jpg')],
     featured: true,
     variants: [
-      { fr: 'Transparent', ar: 'شفاف', en: 'Clear', code: '#DCE4EC', stock: 448, image: '/products/case-clear-magsafe.jpg' },
+      { fr: 'Transparent', ar: 'شفاف', en: 'Clear', code: '#DCE4EC', stock: 448, image: asset('/products/case-clear-magsafe.jpg') },
     ],
   },
   {
@@ -193,10 +278,10 @@ const PRODUCTS = [
       EN: 'Soft-touch silicone case with a microfibre lining. Shock resistant.',
     },
     retail: 1800, wholesale: 1400, superWholesale: 1150, wMin: 10, sMin: 30,
-    images: ['/products/case-silicone-black.jpg'],
+    images: [asset('/products/case-silicone-black.jpg')],
     variants: [
-      { fr: 'Noir', ar: 'أسود', en: 'Black', code: '#111111', stock: 616, image: '/products/case-silicone-black.jpg' },
-      { fr: 'Bleu nuit', ar: 'أزرق داكن', en: 'Midnight blue', code: '#1F2A44', stock: 245, image: '/products/case-silicone-black.jpg' },
+      { fr: 'Noir', ar: 'أسود', en: 'Black', code: '#111111', stock: 616, image: asset('/products/case-silicone-black.jpg') },
+      { fr: 'Bleu nuit', ar: 'أزرق داكن', en: 'Midnight blue', code: '#1F2A44', stock: 245, image: asset('/products/case-silicone-black.jpg') },
     ],
   },
   {
@@ -209,9 +294,9 @@ const PRODUCTS = [
       EN: 'Ultra-clear 9H glass screen protector with anti-fingerprint coating. Pack of 2.',
     },
     retail: 700, wholesale: 450, superWholesale: 350, wMin: 25, sMin: 50,
-    images: ['/products/screen-protector.jpg'],
+    images: [asset('/products/screen-protector.jpg')],
     variants: [
-      { fr: 'Transparent', ar: 'شفاف', en: 'Clear', code: '#EAF0F5', stock: 3500, image: '/products/screen-protector.jpg' },
+      { fr: 'Transparent', ar: 'شفاف', en: 'Clear', code: '#EAF0F5', stock: 3500, image: asset('/products/screen-protector.jpg') },
     ],
   },
   {
@@ -224,10 +309,10 @@ const PRODUCTS = [
       EN: '10,000 mAh power bank with dual USB and 22.5W fast charging. Slim metal body.',
     },
     retail: 4500, wholesale: 3800, superWholesale: 3300, wMin: 5, sMin: 15,
-    images: ['/products/powerbank-10000.jpg'],
+    images: [asset('/products/powerbank-10000.jpg')],
     featured: true,
     variants: [
-      { fr: 'Noir', ar: 'أسود', en: 'Black', code: '#0F0F0F', stock: 161, image: '/products/powerbank-10000.jpg' },
+      { fr: 'Noir', ar: 'أسود', en: 'Black', code: '#0F0F0F', stock: 161, image: asset('/products/powerbank-10000.jpg') },
     ],
   },
   {
@@ -240,9 +325,9 @@ const PRODUCTS = [
       EN: 'Bluetooth 5.3 headphones, passive isolation and 40 hours of battery.',
     },
     retail: 8900, wholesale: 7600, superWholesale: 6900, wMin: 3, sMin: 8,
-    images: ['/products/headphones-over-ear.jpg'],
+    images: [asset('/products/headphones-over-ear.jpg')],
     variants: [
-      { fr: 'Noir', ar: 'أسود', en: 'Black', code: '#141414', stock: 84, image: '/products/headphones-over-ear.jpg' },
+      { fr: 'Noir', ar: 'أسود', en: 'Black', code: '#141414', stock: 84, image: asset('/products/headphones-over-ear.jpg') },
     ],
   },
   {
@@ -255,9 +340,9 @@ const PRODUCTS = [
       EN: 'Strong magnetic air-vent mount with 360° rotation and one-hand docking.',
     },
     retail: 1500, wholesale: 1100, superWholesale: 900, wMin: 15, sMin: 40,
-    images: ['/categories/accessories.jpg'],
+    images: [asset('/categories/accessories.jpg')],
     variants: [
-      { fr: 'Noir', ar: 'أسود', en: 'Black', code: '#222222', stock: 60, image: '/categories/accessories.jpg' },
+      { fr: 'Noir', ar: 'أسود', en: 'Black', code: '#222222', stock: 60, image: asset('/categories/accessories.jpg') },
     ],
   },
 ];
@@ -297,6 +382,13 @@ async function main() {
     await prisma.sequence.deleteMany();
     await prisma.siteSetting.deleteMany();
   }
+
+  // ---- catalog artwork -----------------------------------------------------
+  // Must run before any row is inserted: the demo data resolves its image
+  // references through `asset()`.
+  await publishAssets();
+  const CATEGORIES = buildCategories();
+  const PRODUCTS = buildProducts();
 
   // ---- staff ---------------------------------------------------------------
   const admin = await prisma.user.create({
@@ -684,6 +776,10 @@ async function main() {
           deliveryFee: 700,
           freeDeliveryThreshold: 5000,
         },
+      },
+      {
+        key: 'hero.image',
+        value: asset('/products/airpods-pro-white.jpg'),
       },
       {
         key: 'hero',

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SettingsForm } from '@/components/admin/settings-form';
+import { CatalogMigrationCard } from '@/components/admin/catalog-migration-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,7 @@ export default async function AdminSettingsPage() {
         <p className="text-[12.5px] text-ink-500">Livraison, quantités minimums et informations de facturation.</p>
       </div>
       <SettingsForm values={values} />
+      <CatalogMigrationCard />
     </div>
   );
 }

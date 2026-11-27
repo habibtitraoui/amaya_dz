@@ -15,6 +15,7 @@ import { listCategories, listProducts } from '@/lib/services/catalog';
 import { createCustomer, updateCustomer } from '@/lib/services/customers';
 import { createProduct, updateProduct } from '@/lib/services/products';
 import { uploadImage } from '@/lib/storage';
+import { migrateCatalogImages } from '@/lib/services/catalog-migration';
 import { adjustStock } from '@/lib/services/inventory';
 import { renderInvoicePdf } from '@/lib/invoice-pdf';
 import { renderInvoiceHtml } from '@/lib/invoice-template';
@@ -480,6 +481,34 @@ export const uploadImageHandler = guard(async (request: Request) => {
   }
   const url = await uploadImage(file);
   return json({ ok: true, url });
+});
+
+/**
+ * POST /api/admin/catalog-migration — one-shot backfill of the bundled demo
+ * artwork: uploads every master in `assets/catalog/**` to Object Storage and
+ * repoints `ProductImage.url`, `ProductVariant.image` and `Category.image` at
+ * the returned URLs. Administrator-only, idempotent, and safe to re-run.
+ */
+export const migrateCatalogImagesHandler = guard(async (request: Request) => {
+  const user = await requireUser(request);
+  if (user.role !== 'ADMIN') {
+    throw new AppError('FORBIDDEN', 'Administrator only', 403);
+  }
+  const report = await migrateCatalogImages();
+  await logAudit({
+    actorId: user.id,
+    actorName: user.name,
+    action: 'catalog.migrate_images',
+    entityType: 'ProductImage',
+    summary: `Moved catalog images to object storage (${report.uploaded} objects)`,
+    metadata: {
+      categories: report.categories.updated,
+      productImages: report.productImages.updated,
+      variants: report.variants.updated,
+      remaining: report.remaining,
+    },
+  });
+  return json({ ok: true, report });
 });
 
 /* -------------------------------------------------------------------- stock */
