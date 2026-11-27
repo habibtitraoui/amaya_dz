@@ -14,6 +14,7 @@ import { toProductView } from '@/lib/serializers';
 import { listCategories, listProducts } from '@/lib/services/catalog';
 import { createCustomer, updateCustomer } from '@/lib/services/customers';
 import { createProduct, updateProduct } from '@/lib/services/products';
+import { uploadImage } from '@/lib/storage';
 import { adjustStock } from '@/lib/services/inventory';
 import { renderInvoicePdf } from '@/lib/invoice-pdf';
 import { renderInvoiceHtml } from '@/lib/invoice-template';
@@ -456,6 +457,29 @@ export const updateProductHandler = guard(async (request: Request, id: string) =
   const body = await readJson<never>(request);
   const product = await updateProduct(id, body as never, { id: user.id, name: user.name });
   return json({ ok: true, data: product });
+});
+
+/* ------------------------------------------------------------------ uploads */
+
+/**
+ * POST /api/admin/uploads — multipart/form-data with a single `file` part.
+ * Returns `{ ok: true, url }` where `url` is the public Neon Object Storage
+ * HTTPS URL to persist in `ProductImage.url` / `Category.image`.
+ */
+export const uploadImageHandler = guard(async (request: Request) => {
+  await requireStaff(request, 'manageProducts');
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    throw new AppError('VALIDATION', 'Expected multipart/form-data with a "file" field', 422);
+  }
+  const file = form.get('file');
+  if (!(file instanceof File)) {
+    throw new AppError('VALIDATION', 'Missing "file" field', 422);
+  }
+  const url = await uploadImage(file);
+  return json({ ok: true, url });
 });
 
 /* -------------------------------------------------------------------- stock */

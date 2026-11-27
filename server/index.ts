@@ -41,7 +41,26 @@ async function invoke(
 
   const method = req.method.toUpperCase();
   const hasBody = !['GET', 'HEAD'].includes(method);
-  const body = hasBody && req.body && Object.keys(req.body).length > 0 ? JSON.stringify(req.body) : undefined;
+  const contentType = String(req.headers['content-type'] ?? '');
+
+  // multipart/form-data (image uploads) is not parsed by express.json — pipe
+  // the raw bytes through so the web-standard handler can call request.formData().
+  let body: BodyInit | undefined;
+  if (hasBody && contentType.startsWith('multipart/')) {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    for await (const chunk of req) {
+      size += (chunk as Buffer).length;
+      if (size > 8 * 1024 * 1024) {
+        res.status(413).json({ ok: false, error: { code: 'VALIDATION', message: 'Upload too large' } });
+        return;
+      }
+      chunks.push(chunk as Buffer);
+    }
+    body = Buffer.concat(chunks);
+  } else if (hasBody && req.body && Object.keys(req.body).length > 0) {
+    body = JSON.stringify(req.body);
+  }
 
   const request = new Request(url, { method, headers, body, redirect: 'manual' } as RequestInit);
 
@@ -119,6 +138,7 @@ app.get('/', (_req, res) => {
       'POST /api/admin/products',
       'PUT  /api/admin/products/:id',
       'POST /api/admin/stock',
+      'POST /api/admin/uploads',
     ],
   });
 });
@@ -145,6 +165,7 @@ const routes: [string, string, Handler][] = [
   ['POST', '/admin/products', handlers.createProductHandler],
   ['PUT', '/admin/products/:id', handlers.updateProductHandler],
   ['POST', '/admin/stock', handlers.adjustStockHandler],
+  ['POST', '/admin/uploads', handlers.uploadImageHandler],
 ];
 
 for (const [method, path, handler] of routes) {

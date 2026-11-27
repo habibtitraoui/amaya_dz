@@ -3,8 +3,9 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Loader2, Plus, Trash2, Save, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Loader2, Plus, Trash2, Save, AlertTriangle, ExternalLink, Upload } from 'lucide-react';
 import { saveProductAction } from '@/app/actions/admin';
+import { uploadImageFile } from '@/lib/upload';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
@@ -50,6 +51,8 @@ export function ProductForm({
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<'FR' | 'AR' | 'EN'>('FR');
+  // `null` = idle, `'new'` = uploading a fresh image, number = replacing that row.
+  const [uploading, setUploading] = React.useState<number | 'new' | null>(null);
 
   const translation = (locale: 'AR' | 'FR' | 'EN') =>
     form.translations.find((t) => t.locale === locale) ?? { locale, name: '', description: '' };
@@ -119,6 +122,42 @@ export function ProductForm({
 
   const marginCents =
     Math.round((Number(form.retailPrice) - Number(form.wholesalePrice)) * 100);
+
+  async function handleUpload(file: File, index: number | null) {
+    setUploading(index ?? 'new');
+    setError(null);
+    try {
+      const result = await uploadImageFile(file);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setForm((current) => ({
+        ...current,
+        images:
+          index === null
+            ? [...current.images.filter((image) => image.url.trim()), { url: result.url }]
+            : current.images.map((image, i) => (i === index ? { ...image, url: result.url } : image)),
+      }));
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  function fileInput(index: number | null) {
+    return (
+      <input
+        type="file"
+        accept="image/webp,image/jpeg,image/png,image/avif"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = '';
+          if (file) void handleUpload(file, index);
+        }}
+      />
+    );
+  }
 
   return (
     <form onSubmit={submit} className="grid gap-4 xl:grid-cols-[1fr_340px]">
@@ -293,10 +332,21 @@ export function ProductForm({
                   onChange={(e) =>
                     setForm((c) => ({ ...c, images: c.images.map((img, i) => (i === index ? { ...img, url: e.target.value } : img)) }))
                   }
-                  placeholder="/products/..."
+                  placeholder="/products/… ou https://…"
                   className="h-9 text-[11px]"
                   dir="ltr"
                 />
+                <label
+                  className={cn(
+                    'grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-400 hover:bg-brand-50 hover:text-brand-600',
+                    uploading === index && 'pointer-events-none opacity-50',
+                  )}
+                  title="Téléverser un fichier (Neon Object Storage)"
+                  aria-label="Téléverser une image"
+                >
+                  {uploading === index ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  {fileInput(index)}
+                </label>
                 <button
                   type="button"
                   onClick={() => setForm((c) => ({ ...c, images: c.images.filter((_, i) => i !== index) }))}
@@ -314,9 +364,20 @@ export function ProductForm({
             >
               <Plus className="h-3 w-3" /> Ajouter une image
             </button>
+            <label
+              className={cn(
+                'flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-ink-200 py-2 text-[11px] font-bold text-ink-500 hover:border-brand-300 hover:text-brand-600',
+                uploading === 'new' && 'pointer-events-none opacity-60',
+              )}
+            >
+              {uploading === 'new' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+              {uploading === 'new' ? 'Téléversement…' : 'Téléverser un fichier'}
+              {fileInput(null)}
+            </label>
           </div>
           <p className="mt-2 text-[10px] leading-relaxed text-ink-400">
-            Collez une URL (ImageKit, CDN…) ou un chemin local commençant par <span className="font-mono">/products/</span>.
+            Téléversez depuis votre ordinateur (WebP optimisé, max 4 Mo — stocké sur Neon Object
+            Storage) ou collez une URL existante.
           </p>
         </section>
 

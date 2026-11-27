@@ -113,6 +113,11 @@ Expand **Environment Variables** and add the following keys (enable **Production
 | `AUTH_SECRET` | **Yes** | *(32-byte random string from Step 2, `>= 24` chars)* | Signs `amaya_session` HttpOnly JWT cookies |
 | `NEXT_PUBLIC_SITE_URL` | **Yes** | `https://amaya-dz.vercel.app` *(or `https://amaya.dz`, no trailing slash)* | Base URL for OpenGraph/metadata (`src/app/layout.tsx`) |
 | `PG_POOL_MAX` | **Recommended** | `2` | Caps each serverless instance's internal `pg.Pool` (`src/lib/prisma.ts`, default `5`) |
+| `AWS_ENDPOINT_URL_S3` | **Yes** (image uploads) | `https://br-xxxx.storage.c-2.eu-central-1.aws.neon.tech` | Neon Object Storage branch endpoint (`src/lib/storage.ts`) |
+| `AWS_REGION` | **Yes** (image uploads) | `eu-central-1` | Storage region — must match the Neon project region |
+| `AWS_ACCESS_KEY_ID` | **Yes** (image uploads) | *(storage credential `token_id`, e.g. `nak_live_…`)* | S3 access key used by `POST /api/admin/uploads` |
+| `AWS_SECRET_ACCESS_KEY` | **Yes** (image uploads) | *(storage credential `s3_secret_access_key`, e.g. `nsk_live_…`)* | S3 secret key — shown **once** when the credential is created |
+| `NEON_STORAGE_BUCKET` | **Yes** (image uploads) | `amaya-media` | Bucket created with `access: 'public_read'` (see Step 5.4) |
 | `BUSINESS_PHONE` | Optional | `+213 555 00 00 00` | Fallback storefront phone (editable later in `/admin/settings`) |
 | `BUSINESS_EMAIL` | Optional | `contact@amaya.dz` | Fallback storefront email (editable later in `/admin/settings`) |
 | `BUSINESS_ADDRESS` | Optional | `Oran, Algérie` | Fallback storefront address (editable later in `/admin/settings`) |
@@ -210,10 +215,10 @@ Run through these 5 quick checks after deploying:
    Open `https://<your-app>.vercel.app` in a private/incognito window. Verify Arabic (`RTL`) renders by default and switching between **العربية / Français / English** persists across page reloads.
 3. **Admin Sign-In & Settings:**
    Sign in at `https://<your-app>.vercel.app/login` → open **`/admin`** → visit **`/admin/settings`** to set your store phone, WhatsApp, email, hours, delivery fee (DZD), and free-delivery threshold.
-4. **Product Images Note (Serverless Filesystem):**
-   Vercel Serverless Functions have a read-only filesystem at runtime. When adding new products or categories in `/admin/products` and `/admin/categories`:
-   - Use built-in static paths under `public/` (e.g. `/products/my-item.jpg` committed to Git), **or**
-   - Host images on any `https://` storage/CDN (Vercel Blob, Cloudinary, Cloudflare R2, S3) and paste the `https://...` URL into the Admin form (`next.config.ts` already allows all HTTPS remote image hosts).
+4. **Product Images (Neon Object Storage):**
+   Vercel Serverless Functions have a read-only filesystem at runtime, so uploads go to **Neon Object Storage** — S3-compatible storage in the same Neon project (5 GB free, no credit card, image bytes never touch Postgres compute):
+   - Provision it once in Neon: `npm i @neon/config && neon link`, add a `neon.ts` declaring `buckets: { 'amaya-media': { access: 'public_read' } }` (public read is required — storefront visitors load these URLs anonymously), then `neon deploy`. This writes the `AWS_*` variables; add `NEON_STORAGE_BUCKET=amaya-media` alongside them in Vercel (table in §3.3).
+   - In `/admin/products` and `/admin/categories`, click **Téléverser un fichier**: the browser optimizes the image to WebP (≤1600 px, ~100–200 KB), `POST /api/admin/uploads` stores it in the bucket, and the returned public HTTPS URL is saved in `ProductImage.url` / `Category.image`. **No schema change** — pasting an external `https://…` URL into the same field still works (`next.config.ts` already allows all HTTPS remote image hosts).
 5. **French A4 Invoice PDF Generation:**
    Open an order in `/admin/orders`, issue an invoice, and verify both:
    - Printable HTML view: `/invoices/<invoiceId>?print=1`
