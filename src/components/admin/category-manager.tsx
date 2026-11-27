@@ -3,8 +3,9 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Plus, Loader2, Pencil, Trash2, FolderTree, EyeOff, Eye } from 'lucide-react';
+import { Plus, Loader2, Pencil, Trash2, FolderTree, EyeOff, Eye, Upload } from 'lucide-react';
 import { saveCategoryAction, toggleCategoryAction } from '@/app/actions/admin';
+import { uploadImageFile } from '@/lib/upload';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Textarea } from '@/components/ui/field';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +43,7 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<'FR' | 'AR' | 'EN'>('FR');
+  const [uploading, setUploading] = React.useState(false);
 
   function open(category?: CategoryRow) {
     setEditing(category ?? { ...EMPTY, translations: EMPTY.translations.map((t) => ({ ...t })) });
@@ -84,6 +86,21 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
   async function toggle(category: CategoryRow) {
     await toggleCategoryAction({ id: category.id, isActive: !category.isActive });
     router.refresh();
+  }
+
+  async function handleUpload(file: File) {
+    setUploading(true);
+    setError(null);
+    try {
+      const result = await uploadImageFile(file);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setEditing((current) => (current ? { ...current, image: result.url } : current));
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -167,8 +184,30 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
                 </Field>
               </div>
 
-              <Field label="Image (URL)">
-                <Input value={editing.image} onChange={(event) => setEditing({ ...editing, image: event.target.value })} placeholder="/categories/…" dir="ltr" />
+              <Field label="Image">
+                <div className="flex gap-2">
+                  <Input value={editing.image} onChange={(event) => setEditing({ ...editing, image: event.target.value })} placeholder="/categories/… ou https://…" dir="ltr" />
+                  <label
+                    className={cn(
+                      'grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink-200 text-ink-500 hover:border-brand-300 hover:text-brand-600',
+                      uploading && 'pointer-events-none opacity-50',
+                    )}
+                    title="Téléverser un fichier (Neon Object Storage)"
+                    aria-label="Téléverser une image"
+                  >
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    <input
+                      type="file"
+                      accept="image/webp,image/jpeg,image/png,image/avif"
+                      className="hidden"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        event.target.value = '';
+                        if (file) void handleUpload(file);
+                      }}
+                    />
+                  </label>
+                </div>
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Ordre">
