@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { BadgeCheck, Phone, Mail, MapPin, Store, Truck, FileText, ArrowRight, ShieldCheck } from 'lucide-react';
 import { getLocale } from '@/lib/locale';
 import { getDictionary, type Locale } from '@/lib/i18n';

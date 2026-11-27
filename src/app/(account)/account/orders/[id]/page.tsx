@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, MapPin, Phone, User, Package, FileText, Printer } from 'lucide-react';
 import { prisma } from '@/lib/prisma';

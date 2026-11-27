@@ -1,7 +1,9 @@
 'use client';
 
+import * as React from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { NavigationIndicator } from '@/components/ui/navigation-link';
 
 const PRESETS = [
   { value: 'today', label: 'Aujourd’hui' },
@@ -16,6 +18,7 @@ const PRESETS = [
 
 export function RangeFilter({ active }: { active: string }) {
   const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
   const pathname = usePathname();
   const params = useSearchParams();
 
@@ -23,11 +26,12 @@ export function RangeFilter({ active }: { active: string }) {
     const next = new URLSearchParams(params.toString());
     if (value === '30d') next.delete('range');
     else next.set('range', value);
-    router.push(`${pathname}${next.toString() ? `?${next.toString()}` : ''}`);
+    startTransition(() => router.push(`${pathname}${next.toString() ? `?${next.toString()}` : ''}`));
   }
 
   return (
     <div className="flex flex-wrap gap-1 rounded-full border border-ink-200 bg-white p-1">
+      <NavigationIndicator pending={pending} />
       {PRESETS.map((preset) => (
         <button
           key={preset.value}

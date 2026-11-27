@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { Search, ShoppingBag, User, LayoutDashboard, Truck, Phone } from 'lucide-react';
 import { Logo } from '@/components/storefront/logo';
 import { LocaleSwitcher } from '@/components/storefront/locale-switcher';

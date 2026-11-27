@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
@@ -60,6 +60,7 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+  React.useEffect(() => setOpen(false), [pathname]);
 
   const visible = NAV.filter((item) => {
     if (item.permission === null) return true;
@@ -68,22 +69,22 @@ export function AdminShell({
   });
 
   const sidebar = (
-    <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-white/10 px-5">
         <Image src="/brand/amaya-logo-white.png" alt="AMAYA" width={1600} height={237} className="h-6 w-auto" />
         <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/70">
           {user.role === 'ADMIN' ? 'Admin' : 'Super'}
         </span>
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
+      <nav className="sidebar-scroll min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain p-3">
         {visible.map((item) => {
           const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setOpen(false)}
+              onClick={() => { if (pathname === item.href) setOpen(false); }}
               className={cn(
                 'flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[12.5px] font-medium transition-colors',
                 active ? 'bg-brand-500 text-white shadow-[0_6px_18px_-8px_rgba(245,102,0,0.9)]' : 'text-white/60 hover:bg-white/5 hover:text-white',
@@ -96,7 +97,7 @@ export function AdminShell({
         })}
       </nav>
 
-      <div className="border-t border-white/10 p-3">
+      <div className="shrink-0 border-t border-white/10 p-3">
         <Link
           href="/"
           className="mb-2 flex items-center gap-2 rounded-xl px-3 py-2 text-[11.5px] font-medium text-white/50 transition-colors hover:bg-white/5 hover:text-white"

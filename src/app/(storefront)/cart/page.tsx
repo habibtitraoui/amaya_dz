@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { ShoppingBag, ArrowRight } from 'lucide-react';
 import { getLocale } from '@/lib/locale';
 import { getDictionary, t as interpolate } from '@/lib/i18n';

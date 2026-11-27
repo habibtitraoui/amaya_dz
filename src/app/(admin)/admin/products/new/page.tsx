@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { ArrowLeft } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { ProductForm } from '@/components/admin/product-form';

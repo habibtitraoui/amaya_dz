@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { redirect } from 'next/navigation';
 import { Search, ScrollText, ShieldCheck } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
