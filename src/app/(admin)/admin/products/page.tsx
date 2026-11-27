@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import Image from 'next/image';
 import { Plus, Search, Package, Star, ImageOff } from 'lucide-react';
 import { prisma } from '@/lib/prisma';

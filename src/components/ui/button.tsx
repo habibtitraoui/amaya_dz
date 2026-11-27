@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { cn } from '@/lib/utils';
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'dark';

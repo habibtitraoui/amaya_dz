@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
@@ -60,6 +60,7 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+  React.useEffect(() => setOpen(false), [pathname]);
 
   const visible = NAV.filter((item) => {
     if (item.permission === null) return true;
@@ -83,7 +84,7 @@ export function AdminShell({
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setOpen(false)}
+              onClick={() => { if (pathname === item.href) setOpen(false); }}
               className={cn(
                 'flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[12.5px] font-medium transition-colors',
                 active ? 'bg-brand-500 text-white shadow-[0_6px_18px_-8px_rgba(245,102,0,0.9)]' : 'text-white/60 hover:bg-white/5 hover:text-white',

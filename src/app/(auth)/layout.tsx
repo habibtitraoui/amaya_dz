@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { ArrowLeft } from 'lucide-react';
 import { getLocale } from '@/lib/locale';
 import { getDictionary } from '@/lib/i18n';

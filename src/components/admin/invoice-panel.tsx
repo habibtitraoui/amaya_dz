@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { useRouter } from 'next/navigation';
 import { FileText, Loader2, Printer, Download, Plus, ShieldCheck, Info } from 'lucide-react';
 import { issueInvoiceAction } from '@/app/actions/admin';

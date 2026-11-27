@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { Minus, Plus, Trash2, AlertTriangle, Loader2, ImageOff } from 'lucide-react';
 import { useCart } from '@/components/cart-provider';
 import { formatDA } from '@/lib/money';

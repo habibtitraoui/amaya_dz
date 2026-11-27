@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { MapPin, Phone, Mail, Clock, Instagram, Facebook } from 'lucide-react';
 import { LogoLockup } from '@/components/storefront/logo';
 import type { Dictionary, Locale } from '@/lib/i18n';

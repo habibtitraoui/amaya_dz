@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { SlidersHorizontal, PackageSearch, X } from 'lucide-react';
 import { getLocale } from '@/lib/locale';
 import { getDictionary, t as interpolate } from '@/lib/i18n';

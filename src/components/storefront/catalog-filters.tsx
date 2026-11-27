@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NavigationIndicator } from '@/components/ui/navigation-link';
 
 type Category = { id: string; slug: string; name: string; productCount: number };
 
@@ -43,6 +44,7 @@ export function CatalogFilters({
   };
 }) {
   const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
   const params = useSearchParams();
   const [term, setTerm] = React.useState(search ?? '');
   const [min, setMin] = React.useState(minPrice?.toString() ?? '');
@@ -56,11 +58,12 @@ export function CatalogFilters({
       else query.set(key, value);
     }
     query.delete('page');
-    router.push(`/products${query.toString() ? `?${query.toString()}` : ''}`);
+    startTransition(() => router.push(`/products${query.toString() ? `?${query.toString()}` : ''}`));
   }
 
   return (
     <div className="space-y-5">
+      <NavigationIndicator pending={pending} />
       {/* desktop search */}
       <form
         onSubmit={(event) => {

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { notFound } from 'next/navigation';
 import { PackageSearch } from 'lucide-react';
 import { getLocale } from '@/lib/locale';

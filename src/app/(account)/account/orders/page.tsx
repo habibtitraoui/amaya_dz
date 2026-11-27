@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { Package, ShoppingBag, ArrowRight } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';

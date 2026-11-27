@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { CheckCircle2, Package, Phone } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { getLocale } from '@/lib/locale';

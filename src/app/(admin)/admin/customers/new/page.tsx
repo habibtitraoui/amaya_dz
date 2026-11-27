@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/ui/navigation-link';
 import { ArrowLeft } from 'lucide-react';
 import { CustomerForm } from '@/components/admin/customer-form';
 
