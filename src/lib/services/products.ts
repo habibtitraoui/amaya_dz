@@ -53,7 +53,14 @@ function validatePrices(input: ProductInput) {
   }
 }
 
-function normaliseTranslations(translations: TranslationInput[]): TranslationInput[] {
+function normaliseTranslations(translations: TranslationInput[] | undefined | null): TranslationInput[] {
+  // Callers reach this through `as never` casts (server action + REST handler),
+  // so the declared array type proves nothing at runtime: a payload without a
+  // `translations` key used to crash here with
+  // "Cannot read properties of undefined (reading 'find')".
+  if (!Array.isArray(translations) || translations.length === 0) {
+    throw new AppError('VALIDATION', 'Translations are required (at least French)');
+  }
   const fr = translations.find((t) => t.locale === 'FR');
   if (!fr || !fr.name.trim()) throw new AppError('VALIDATION', 'The French name is required');
   return translations

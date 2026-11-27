@@ -220,6 +220,9 @@ export async function saveProductAction(input: unknown, productId?: string): Pro
     if (!parsed.success) throw new AppError('VALIDATION', parsed.error.issues[0]?.message ?? 'Invalid product');
     const payload = {
       ...parsed.data,
+      // The service layer expects a dense array; entries without a name would
+      // otherwise survive validation and produce nameless products.
+      translations: parsed.data.translations.filter((t) => t.name?.trim()),
       variants: parsed.data.variants?.map((variant) => ({
         ...variant,
         colorNameAr: variant.colorNameAr || variant.colorNameFr,

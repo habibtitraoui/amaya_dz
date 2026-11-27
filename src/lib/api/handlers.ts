@@ -48,6 +48,12 @@ function guard<T extends unknown[]>(handler: (...args: T) => Promise<Response>) 
         return fail(error.status, error.code, error.message, error.details);
       }
       const state = toActionState(error);
+      // toActionState maps known problems (e.g. a foreign-key violation to
+      // VALIDATION); anything it could not classify stays a 500.
+      if (!state.ok && state.code && state.code !== 'INTERNAL') {
+        const status = state.code === 'VALIDATION' ? 422 : state.code === 'CONFLICT' ? 409 : 400;
+        return fail(status, state.code, state.error);
+      }
       return fail(500, 'INTERNAL', state.ok ? 'Unexpected error' : state.error);
     }
   };
