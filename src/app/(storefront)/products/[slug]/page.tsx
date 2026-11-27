@@ -41,6 +41,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         product={product}
         tier={tier}
         signedIn={!!user}
+        locale={locale}
         labels={{
           addToCart: dict.product.addToCart,
           added: dict.product.added,
@@ -60,6 +61,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           minQuantityHint: dict.product.minQuantityHint,
           quantityBelowMin: dict.product.quantityBelowMin,
           quantity: dict.common.quantity,
+          decreaseQuantity: dict.common.decreaseQuantity,
+          increaseQuantity: dict.common.increaseQuantity,
           error: dict.common.error,
           taxNote: dict.product.stockLeft,
           wholesaleHint: dict.product.wholesaleHint,

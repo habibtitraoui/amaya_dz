@@ -97,7 +97,7 @@ export default async function HomePage() {
               <div className="absolute inset-0 brand-grid opacity-30" />
               <Image
                 src={heroImage}
-                alt="AMAYA premium wireless earbuds"
+                alt={dict.home.heroImageAlt}
                 fill
                 priority
                 sizes="(min-width: 1024px) 480px, 90vw"

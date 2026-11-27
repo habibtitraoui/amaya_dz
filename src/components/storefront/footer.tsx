@@ -44,7 +44,7 @@ export function StoreFooter({ locale, dict }: { locale: Locale; dict: Dictionary
         <div className="lg:col-span-4">
           <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.25em] text-brand-400">{dict.footer.contact}</h3>
           <ul className="space-y-2.5 text-[13px] text-white/65">
-            <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-white/40" /> Oran, Algérie</li>
+            <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-white/40" /> {dict.footer.location}</li>
             <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-white/40" /> <span dir="ltr">+213 555 00 00 00</span></li>
             <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-white/40" /> contact@amaya.dz</li>
             <li className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-white/40" /> {dict.footer.hours}</li>

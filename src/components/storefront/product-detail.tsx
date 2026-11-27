@@ -30,6 +30,8 @@ type Labels = {
   minQuantityHint: string;
   quantityBelowMin: string;
   quantity: string;
+  decreaseQuantity: string;
+  increaseQuantity: string;
   error: string;
   taxNote: string;
   wholesaleHint: string;
@@ -41,11 +43,13 @@ export function ProductDetail({
   tier,
   signedIn,
   labels,
+  locale,
 }: {
   product: ProductView;
   tier: 'RETAIL' | 'WHOLESALE' | 'SUPER_WHOLESALE';
   signedIn: boolean;
   labels: Labels;
+  locale: string;
 }) {
   const router = useRouter();
   const cart = useCart();
@@ -191,11 +195,11 @@ export function ProductDetail({
           <p className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-600">{labels.yourPrice}</p>
           <div className="mt-1 flex flex-wrap items-baseline gap-3">
             <span dir="ltr" className="text-[30px] font-extrabold leading-none tracking-tight text-ink-900">
-              {formatDA(rule.unitPrice, 'fr')}
+              {formatDA(rule.unitPrice, locale)}
             </span>
             {tier !== 'RETAIL' && (
               <span className="text-[12px] font-medium text-ink-400 line-through" dir="ltr">
-                {formatDA(product.prices.retail.unitPrice, 'fr')}
+                {formatDA(product.prices.retail.unitPrice, locale)}
               </span>
             )}
           </div>
@@ -218,7 +222,7 @@ export function ProductDetail({
                 >
                   <span>{row.label}</span>
                   <span className="flex items-center gap-2 tabular-nums" dir="ltr">
-                    <span>{formatDA(row.value, 'fr')}</span>
+                    <span>{formatDA(row.value, locale)}</span>
                     <span className="text-[10px] text-ink-400">min {row.min}</span>
                   </span>
                 </div>
@@ -295,7 +299,7 @@ export function ProductDetail({
                 onClick={() => setQuantity((value) => Math.max(minQty, value - 1))}
                 className="grid h-11 w-11 place-items-center rounded-full text-ink-600 hover:bg-ink-50 disabled:opacity-30"
                 disabled={quantity <= minQty}
-                aria-label="Decrease"
+                aria-label={labels.decreaseQuantity}
               >
                 <Minus className="h-3.5 w-3.5" />
               </button>
@@ -315,7 +319,7 @@ export function ProductDetail({
                 type="button"
                 onClick={() => setQuantity((value) => Math.min(Math.max(minQty, available), value + 1))}
                 className="grid h-11 w-11 place-items-center rounded-full text-ink-600 hover:bg-ink-50"
-                aria-label="Increase"
+                aria-label={labels.increaseQuantity}
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
@@ -345,7 +349,7 @@ export function ProductDetail({
             {outOfStock ? labels.outOfStock : labels.taxNote.replace('{count}', String(available))}
           </span>
           <span className="font-bold text-ink-900" dir="ltr">
-            {formatDA(lineTotal, 'fr')}
+            {formatDA(lineTotal, locale)}
           </span>
         </div>
 

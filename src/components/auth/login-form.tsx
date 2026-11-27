@@ -16,6 +16,7 @@ export function LoginForm({
     title: string;
     subtitle: string;
     email: string;
+    emailPlaceholder: string;
     password: string;
     signIn: string;
     signingIn: string;
@@ -81,7 +82,7 @@ export function LoginForm({
               dir="ltr"
               required
               className="ps-9"
-              placeholder="vous@exemple.dz"
+              placeholder={labels.emailPlaceholder}
             />
           </div>
         </Field>

@@ -124,7 +124,7 @@ export function AdminShell({
   );
 
   return (
-    <div className="min-h-dvh bg-ink-50">
+    <div className="min-h-dvh bg-ink-50" dir="ltr" lang="fr">
       <aside className="fixed inset-y-0 start-0 z-40 hidden w-60 bg-ink-950 lg:block">{sidebar}</aside>
 
       {open && (
@@ -163,7 +163,7 @@ export function AdminShell({
             Boutique
           </Link>
         </header>
-        <main className="p-4 sm:p-6">{children}</main>
+        <main id="main" className="p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );

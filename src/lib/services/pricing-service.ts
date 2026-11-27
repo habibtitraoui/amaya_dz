@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { AppError } from '@/lib/errors';
 import { type Tier, priceRuleFor } from '@/lib/pricing';
 import { toDecimalString } from '@/lib/money';
+import { getDictionary, isLocale, t as interpolate, type Locale } from '@/lib/i18n';
 
 /**
  * Server-side quoting.
@@ -55,6 +56,10 @@ export async function quoteCart(
   const errors: Quote['errors'] = [];
   const lines: QuotedLine[] = [];
 
+  const rawLocale = (options.locale ?? 'fr').toLowerCase();
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : 'fr';
+  const dict = await getDictionary(locale);
+
   const merged = new Map<string, CartLineInput>();
   for (const item of items) {
     const key = `${item.productId}:${item.variantId}`;
@@ -77,16 +82,16 @@ export async function quoteCart(
   for (const item of merged.values()) {
     const product = byId.get(item.productId);
     if (!product) {
-      errors.push({ code: 'NOT_FOUND', message: 'Product no longer available', productId: item.productId });
+      errors.push({ code: 'NOT_FOUND', message: dict.product.notFound, productId: item.productId });
       continue;
     }
     if (product.status !== 'AVAILABLE' && product.status !== 'OUT_OF_STOCK') {
-      errors.push({ code: 'UNAVAILABLE', message: 'Product is not for sale', productId: product.id });
+      errors.push({ code: 'UNAVAILABLE', message: dict.cart.lineUnavailable, productId: product.id });
       continue;
     }
     const variant = product.variants.find((v) => v.id === item.variantId);
     if (!variant || !variant.isActive) {
-      errors.push({ code: 'VARIANT', message: 'Selected colour is unavailable', productId: product.id });
+      errors.push({ code: 'VARIANT', message: dict.cart.lineUnavailable, productId: product.id });
       continue;
     }
 
@@ -104,7 +109,7 @@ export async function quoteCart(
     if (item.quantity < rule.minQuantity) {
       errors.push({
         code: 'MIN_QTY',
-        message: `Minimum quantity is ${rule.minQuantity} for this product`,
+        message: interpolate(dict.product.quantityBelowMin, { count: rule.minQuantity }),
         productId: product.id,
         variantId: variant.id,
       });
@@ -114,7 +119,7 @@ export async function quoteCart(
     if (item.quantity > available) {
       errors.push({
         code: 'STOCK',
-        message: `Only ${available} left in stock`,
+        message: interpolate(dict.product.lowStock, { count: available }),
         productId: product.id,
         variantId: variant.id,
       });
@@ -123,7 +128,13 @@ export async function quoteCart(
     const lineCents = Math.round(Number(rule.unitPrice) * 100) * item.quantity;
     const frName = product.translations.find((t) => t.locale === 'FR')?.name ?? product.sku;
     const localeName =
-      product.translations.find((t) => t.locale?.toUpperCase() === (options.locale ?? 'fr').toUpperCase())?.name ?? frName;
+      product.translations.find((t) => t.locale?.toUpperCase() === locale.toUpperCase())?.name ?? frName;
+    const colorLocalized =
+      locale === 'ar'
+        ? variant.colorNameAr || variant.colorNameFr
+        : locale === 'en'
+          ? variant.colorNameEn || variant.colorNameFr
+          : variant.colorNameFr;
 
     lines.push({
       productId: product.id,
@@ -132,7 +143,7 @@ export async function quoteCart(
       productNameFr: frName,
       sku: variant.sku,
       colorFr: variant.colorNameFr,
-      colorLocalized: variant.colorNameFr,
+      colorLocalized,
       quantity: item.quantity,
       unitPrice: rule.unitPrice,
       lineTotal: (lineCents / 100).toFixed(2),

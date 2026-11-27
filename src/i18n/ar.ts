@@ -22,6 +22,10 @@ const ar: DictionaryShape = {
     search: 'بحث',
   },
   common: {
+    menu: 'القائمة',
+    skipToContent: 'تخطي إلى المحتوى',
+    decreaseQuantity: 'إنقاص الكمية',
+    increaseQuantity: 'زيادة الكمية',
     loading: 'جارٍ التحميل…',
     save: 'حفظ',
     saving: 'جارٍ الحفظ…',
@@ -72,6 +76,7 @@ const ar: DictionaryShape = {
     showing: 'عرض {count} نتيجة',
   },
   home: {
+    heroImageAlt: 'أمايا — إكسسوارات فاخرة للهواتف',
     heroBadge: 'جديد 2026',
     heroTitle: 'الإكسسوار المثالي لهاتفك',
     heroSubtitle:
@@ -191,6 +196,7 @@ const ar: DictionaryShape = {
     clear: 'إفراغ السلة',
     quantityUpdated: 'تم تحديث السلة',
     addedToCart: 'تمت إضافة {name} إلى سلتك',
+    lineUnavailable: 'هذا المنتج لم يعد متوفرًا.',
   },
   checkout: {
     title: 'إتمام الطلب',
@@ -224,6 +230,7 @@ const ar: DictionaryShape = {
     loginTitle: 'تسجيل الدخول إلى حسابك',
     loginSubtitle: 'مساحة مخصصة للعملاء المهنيين وموظفي أمايا.',
     email: 'البريد الإلكتروني',
+    emailPlaceholder: 'you@example.dz',
     password: 'كلمة المرور',
     signIn: 'تسجيل الدخول',
     signingIn: 'جارٍ الدخول…',
@@ -271,6 +278,7 @@ const ar: DictionaryShape = {
     superWholesaleNotice: 'يتم تطبيق أسعار الجملة الفائقة تلقائيًا.',
     profileUpdated: 'تم تحديث المعلومات.',
     cannotChangeTier: 'نوع الحساب يُدار من قبل أمايا.',
+    invoice: 'الفاتورة',
   },
   pro: {
     metaTitle: 'حساب مهني',
@@ -290,6 +298,7 @@ const ar: DictionaryShape = {
     email: 'البريد الإلكتروني',
     address: 'العنوان',
     hours: 'السبت – الخميس · 9 – 18',
+    location: 'وهران، الجزائر',
     rights: 'جميع الحقوق محفوظة.',
     legal: 'الشروط العامة',
     privacy: 'الخصوصية',
@@ -315,6 +324,16 @@ const ar: DictionaryShape = {
     OUT_OF_STOCK: 'نفدت الكمية',
     HIDDEN: 'مخفي',
     ARCHIVED: 'مؤرشف',
+  },
+  notFound: {
+    title: 'الصفحة غير موجودة',
+    text: 'الصفحة التي تبحث عنها غير موجودة أو تم نقلها.',
+    backHome: 'العودة إلى الرئيسية',
+  },
+  error: {
+    title: 'حدث خطأ',
+    text: 'حدث خطأ من جانبنا. حاول مرة أخرى بعد لحظات.',
+    retry: 'حاول مرة أخرى',
   },
 };
 

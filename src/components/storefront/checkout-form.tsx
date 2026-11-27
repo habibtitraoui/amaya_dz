@@ -43,9 +43,11 @@ export function CheckoutForm({
   quote,
   user,
   labels,
+  locale,
 }: {
   quote: Quote;
   user: { name: string; email: string; phone: string | null } | null;
+  locale: string;
   labels: Labels;
 }) {
   const router = useRouter();
@@ -194,11 +196,11 @@ export function CheckoutForm({
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-2 text-[12.5px] font-semibold text-ink-900">{line.productName}</p>
                   <p className="text-[11px] text-ink-400">
-                    {line.colorFr} × {line.quantity}
+                    {line.colorLocalized} × {line.quantity}
                   </p>
                 </div>
                 <span className="text-[12px] font-bold text-ink-800 tabular-nums" dir="ltr">
-                  {formatDA(line.lineTotal, 'fr')}
+                  {formatDA(line.lineTotal, locale)}
                 </span>
               </li>
             ))}
@@ -207,17 +209,17 @@ export function CheckoutForm({
           <dl className="mt-4 space-y-2 border-t border-ink-100 pt-4 text-[13px]">
             <div className="flex justify-between">
               <dt className="text-ink-500">{labels.subtotal}</dt>
-              <dd className="font-semibold tabular-nums" dir="ltr">{formatDA(quote.subtotal, 'fr')}</dd>
+              <dd className="font-semibold tabular-nums" dir="ltr">{formatDA(quote.subtotal, locale)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-ink-500">{labels.delivery}</dt>
               <dd className="font-semibold tabular-nums" dir="ltr">
-                {Number(deliveryFee) === 0 ? labels.deliveryFree : formatDA(deliveryFee, 'fr')}
+                {Number(deliveryFee) === 0 ? labels.deliveryFree : formatDA(deliveryFee, locale)}
               </dd>
             </div>
             <div className="flex justify-between border-t border-ink-100 pt-3 text-[15px]">
               <dt className="font-bold">{labels.total}</dt>
-              <dd className="font-extrabold text-brand-600 tabular-nums" dir="ltr">{formatDA(total, 'fr')}</dd>
+              <dd className="font-extrabold text-brand-600 tabular-nums" dir="ltr">{formatDA(total, locale)}</dd>
             </div>
           </dl>
 

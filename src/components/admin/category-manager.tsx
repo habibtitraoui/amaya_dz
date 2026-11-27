@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Plus, Loader2, Pencil, Trash2, FolderTree, EyeOff, Eye, Upload } from 'lucide-react';
 import { saveCategoryAction, toggleCategoryAction } from '@/app/actions/admin';
-import { uploadImageFile } from '@/lib/upload';
+import { releaseStagedImage, stageImageFile, uploadStagedImage, type StagedImage } from '@/lib/upload';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Textarea } from '@/components/ui/field';
 import { Badge } from '@/components/ui/badge';
@@ -43,12 +43,21 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<'FR' | 'AR' | 'EN'>('FR');
-  const [uploading, setUploading] = React.useState(false);
+  const [staging, setStaging] = React.useState(false);
+  const [stagedImage, setStagedImage] = React.useState<StagedImage | null>(null);
 
   function open(category?: CategoryRow) {
+    releaseStagedImage(stagedImage);
+    setStagedImage(null);
     setEditing(category ?? { ...EMPTY, translations: EMPTY.translations.map((t) => ({ ...t })) });
     setError(null);
     setTab('FR');
+  }
+
+  function close() {
+    releaseStagedImage(stagedImage);
+    setStagedImage(null);
+    setEditing(null);
   }
 
   function setTranslation(locale: 'FR' | 'AR' | 'EN', key: 'name' | 'description', value: string) {
@@ -65,17 +74,34 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
     setPending(true);
     setError(null);
     try {
+      // A staged file goes to Object Storage now, on submit — never on pick.
+      let image = editing.image.startsWith('blob:') ? '' : editing.image;
+      if (stagedImage) {
+        const uploaded = await uploadStagedImage(stagedImage);
+        if (!uploaded.ok) {
+          setError(`Échec de l’envoi de l’image : ${uploaded.error}`);
+          setPending(false);
+          return;
+        }
+        image = uploaded.url;
+      }
       const result = await saveCategoryAction({
         id: editing.id || undefined,
-        image: editing.image || undefined,
+        image: image || undefined,
         isActive: editing.isActive,
         sortOrder: editing.sortOrder,
         translations: editing.translations.filter((t) => t.name.trim()),
       });
       if (result.ok) {
+        releaseStagedImage(stagedImage);
+        setStagedImage(null);
         setEditing(null);
         router.refresh();
       } else {
+        // Keep the stored URL so a retry doesn't re-upload the same file.
+        releaseStagedImage(stagedImage);
+        setStagedImage(null);
+        setEditing((current) => (current ? { ...current, image } : current));
         setError(result.error);
       }
     } finally {
@@ -89,17 +115,21 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
   }
 
   async function handleUpload(file: File) {
-    setUploading(true);
+    setStaging(true);
     setError(null);
     try {
-      const result = await uploadImageFile(file);
-      if (!result.ok) {
-        setError(result.error);
+      const staged = await stageImageFile(file);
+      if (!staged.ok) {
+        setError(staged.error);
         return;
       }
-      setEditing((current) => (current ? { ...current, image: result.url } : current));
+      // No request leaves the browser here — the file is only optimized and
+      // kept in memory with a blob: preview URL until the form is submitted.
+      releaseStagedImage(stagedImage);
+      setStagedImage(staged.image);
+      setEditing((current) => (current ? { ...current, image: staged.image.previewUrl } : current));
     } finally {
-      setUploading(false);
+      setStaging(false);
     }
   }
 
@@ -186,16 +216,25 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
 
               <Field label="Image">
                 <div className="flex gap-2">
-                  <Input value={editing.image} onChange={(event) => setEditing({ ...editing, image: event.target.value })} placeholder="https://…" dir="ltr" />
+                  <Input
+                    value={editing.image}
+                    onChange={(event) => {
+                      releaseStagedImage(stagedImage);
+                      setStagedImage(null);
+                      setEditing({ ...editing, image: event.target.value });
+                    }}
+                    placeholder="https://…"
+                    dir="ltr"
+                  />
                   <label
                     className={cn(
                       'grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink-200 text-ink-500 hover:border-brand-300 hover:text-brand-600',
-                      uploading && 'pointer-events-none opacity-50',
+                      staging && 'pointer-events-none opacity-50',
                     )}
-                    title="Téléverser un fichier (Neon Object Storage)"
-                    aria-label="Téléverser une image"
+                    title="Choisir un fichier — envoyé uniquement à l’enregistrement"
+                    aria-label="Choisir une image (envoyée à l’enregistrement)"
                   >
-                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {staging ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                     <input
                       type="file"
                       accept="image/webp,image/jpeg,image/png,image/avif"
@@ -223,7 +262,7 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
             {error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[11.5px] font-medium text-red-700">{error}</p>}
 
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setEditing(null)} className="rounded-full px-4 py-2 text-[12px] font-semibold text-ink-500 hover:bg-ink-50">
+              <button type="button" onClick={close} className="rounded-full px-4 py-2 text-[12px] font-semibold text-ink-500 hover:bg-ink-50">
                 Annuler
               </button>
               <Button type="submit" size="sm" disabled={pending}>

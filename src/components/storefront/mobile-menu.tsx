@@ -14,7 +14,7 @@ export function MobileMenu({
 }: {
   locale: string;
   nav: { href: string; label: string }[];
-  labels: { menu: string; login: string; account: string; admin: string };
+  labels: { menu: string; close: string; login: string; account: string; admin: string };
   user: CurrentUser | null;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -60,7 +60,7 @@ export function MobileMenu({
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Close menu"
+                aria-label={labels.close}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-ink-50 text-ink-600"
               >
                 <X className="h-4 w-4" />

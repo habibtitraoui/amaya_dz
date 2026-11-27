@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { CART_COOKIE, MAX_LINE_QUANTITY, parseCart, serializeCart, type CartLine } from '@/lib/cart';
 import { quoteCart, type Quote } from '@/lib/services/pricing-service';
 import { getTier } from '@/lib/auth';
+import { getLocale } from '@/lib/locale';
 import type { ActionState } from '@/lib/errors';
 
 async function readCart(): Promise<CartLine[]> {
@@ -70,9 +71,11 @@ export async function addToCartAction(input: {
     });
   await writeCart(lines);
 
+  const locale = await getLocale();
   const quote = await quoteCart(
     lines.map((l) => ({ productId: l.productId, variantId: l.variantId, quantity: l.quantity })),
     tier,
+    { locale },
   );
   revalidatePath('/', 'layout');
   const lineErrors = quote.errors.filter((e) => e.productId === product.id);
@@ -125,9 +128,11 @@ export async function getCartView(): Promise<CartView> {
   const tier = await getTier();
   const count = lines.reduce((sum, l) => sum + l.quantity, 0);
   if (lines.length === 0) return { lines, quote: null, count };
+  const locale = await getLocale();
   const quote = await quoteCart(
     lines.map((l) => ({ productId: l.productId, variantId: l.variantId, quantity: l.quantity })),
     tier,
+    { locale },
   );
   return { lines, quote, count };
 }

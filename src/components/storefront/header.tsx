@@ -54,7 +54,7 @@ export async function StoreHeader({
           <MobileMenu
             locale={locale}
             nav={nav}
-            labels={{ menu: dict.nav.categories, login: dict.nav.login, account: dict.nav.account, admin: dict.nav.admin }}
+            labels={{ menu: dict.common.menu, close: dict.common.close, login: dict.nav.login, account: dict.nav.account, admin: dict.nav.admin }}
             user={user}
           />
           <Logo priority className="h-6 shrink-0 sm:h-7" />

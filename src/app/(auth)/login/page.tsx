@@ -6,7 +6,11 @@ import { getCurrentUser } from '@/lib/auth';
 import { LoginForm } from '@/components/auth/login-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Connexion' };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const dict = await getDictionary(locale);
+  return { title: dict.nav.login };
+}
 
 const DEMO_ACCOUNTS = [
   { role: 'Admin', email: 'admin@amaya.dz', password: 'Admin@2026', tone: 'bg-ink-900 text-white' },
@@ -28,6 +32,7 @@ export default async function LoginPage() {
         title: dict.auth.loginTitle,
         subtitle: dict.auth.loginSubtitle,
         email: dict.auth.email,
+        emailPlaceholder: dict.auth.emailPlaceholder,
         password: dict.auth.password,
         signIn: dict.auth.signIn,
         signingIn: dict.auth.signingIn,

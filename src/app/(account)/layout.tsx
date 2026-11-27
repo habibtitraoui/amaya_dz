@@ -31,7 +31,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
     <CartProvider initialCount={count}>
       <div className="flex min-h-dvh flex-col">
         <StoreHeader locale={locale} user={user} />
-        <main className="flex-1">
+        <main id="main" className="flex-1">
           <div className="container-page py-8">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
               <div>
