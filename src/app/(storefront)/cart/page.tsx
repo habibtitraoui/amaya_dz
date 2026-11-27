@@ -52,6 +52,8 @@ export default async function CartPage() {
             remove: dict.cart.remove,
             minQtyError: dict.cart.minQtyError,
             stockError: dict.cart.stockError,
+            decreaseQuantity: dict.common.decreaseQuantity,
+            increaseQuantity: dict.common.increaseQuantity,
           }}
           locale={locale}
         />

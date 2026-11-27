@@ -30,7 +30,7 @@ export function Logo({
   );
   if (!href) return mark;
   return (
-    <Link href={href} aria-label="AMAYA home" className="inline-flex items-center">
+    <Link href={href} aria-label="AMAYA" className="inline-flex items-center">
       {mark}
     </Link>
   );

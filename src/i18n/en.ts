@@ -22,6 +22,10 @@ const en: DictionaryShape = {
     search: 'Search',
   },
   common: {
+    menu: 'Menu',
+    skipToContent: 'Skip to content',
+    decreaseQuantity: 'Decrease quantity',
+    increaseQuantity: 'Increase quantity',
     loading: 'Loading…',
     save: 'Save',
     saving: 'Saving…',
@@ -72,6 +76,7 @@ const en: DictionaryShape = {
     showing: 'Showing {count} result(s)',
   },
   home: {
+    heroImageAlt: 'AMAYA — premium phone accessories',
     heroBadge: 'New 2026',
     heroTitle: 'The perfect accessory for your phone',
     heroSubtitle:
@@ -191,6 +196,7 @@ const en: DictionaryShape = {
     clear: 'Clear cart',
     quantityUpdated: 'Cart updated',
     addedToCart: '{name} was added to your cart',
+    lineUnavailable: 'This product is no longer available.',
   },
   checkout: {
     title: 'Complete your order',
@@ -224,6 +230,7 @@ const en: DictionaryShape = {
     loginTitle: 'Sign in to your account',
     loginSubtitle: 'Reserved for business customers and AMAYA staff.',
     email: 'Email',
+    emailPlaceholder: 'you@example.dz',
     password: 'Password',
     signIn: 'Sign in',
     signingIn: 'Signing in…',
@@ -271,6 +278,7 @@ const en: DictionaryShape = {
     superWholesaleNotice: 'Your super-wholesale prices are applied automatically.',
     profileUpdated: 'Information updated.',
     cannotChangeTier: 'Your account type is managed by AMAYA.',
+    invoice: 'Invoice',
   },
   pro: {
     metaTitle: 'Professional account',
@@ -290,6 +298,7 @@ const en: DictionaryShape = {
     email: 'Email',
     address: 'Address',
     hours: 'Sat – Thu · 9am – 6pm',
+    location: 'Oran, Algeria',
     rights: 'All rights reserved.',
     legal: 'Terms of service',
     privacy: 'Privacy',
@@ -315,6 +324,16 @@ const en: DictionaryShape = {
     OUT_OF_STOCK: 'Out of stock',
     HIDDEN: 'Hidden',
     ARCHIVED: 'Archived',
+  },
+  notFound: {
+    title: 'Page not found',
+    text: 'The page you are looking for does not exist or has been moved.',
+    backHome: 'Back to home',
+  },
+  error: {
+    title: 'Something went wrong',
+    text: 'Something went wrong on our side. Please try again in a moment.',
+    retry: 'Try again',
   },
 };
 

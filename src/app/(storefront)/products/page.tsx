@@ -14,7 +14,9 @@ import { cn } from '@/lib/utils';
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: 'Produits' };
+  const locale = await getLocale();
+  const dict = await getDictionary(locale);
+  return { title: dict.nav.products, description: dict.catalog.subtitle };
 }
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;

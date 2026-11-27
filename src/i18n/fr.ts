@@ -29,6 +29,10 @@ const frRaw = {
     search: 'Rechercher',
   },
   common: {
+    menu: 'Menu',
+    skipToContent: 'Aller au contenu',
+    decreaseQuantity: 'Réduire la quantité',
+    increaseQuantity: 'Augmenter la quantité',
     loading: 'Chargement…',
     save: 'Enregistrer',
     saving: 'Enregistrement…',
@@ -79,6 +83,7 @@ const frRaw = {
     showing: 'Affichage de {count} résultat(s)',
   },
   home: {
+    heroImageAlt: 'AMAYA — accessoires premium pour téléphone',
     heroBadge: 'Nouveautés 2026',
     heroTitle: 'L’accessoire parfait pour votre téléphone',
     heroSubtitle:
@@ -198,6 +203,7 @@ const frRaw = {
     clear: 'Vider le panier',
     quantityUpdated: 'Panier mis à jour',
     addedToCart: '{name} a été ajouté à votre panier',
+    lineUnavailable: 'Ce produit n’est plus disponible.',
   },
   checkout: {
     title: 'Finaliser la commande',
@@ -232,6 +238,7 @@ const frRaw = {
     loginTitle: 'Connexion à votre compte',
     loginSubtitle: 'Espace réservé aux clients professionnels et au personnel AMAYA.',
     email: 'E-mail',
+    emailPlaceholder: 'vous@exemple.dz',
     password: 'Mot de passe',
     signIn: 'Se connecter',
     signingIn: 'Connexion…',
@@ -279,6 +286,7 @@ const frRaw = {
     superWholesaleNotice: 'Vos prix super gros sont appliqués automatiquement.',
     profileUpdated: 'Informations mises à jour.',
     cannotChangeTier: 'Le type de compte est géré par AMAYA.',
+    invoice: 'Facture',
   },
   pro: {
     metaTitle: 'Compte professionnel',
@@ -298,6 +306,7 @@ const frRaw = {
     email: 'E-mail',
     address: 'Adresse',
     hours: 'Sam – Jeu · 9h – 18h',
+    location: 'Oran, Algérie',
     rights: 'Tous droits réservés.',
     legal: 'Conditions générales',
     privacy: 'Confidentialité',
@@ -323,6 +332,16 @@ const frRaw = {
     OUT_OF_STOCK: 'Rupture de stock',
     HIDDEN: 'Masqué',
     ARCHIVED: 'Archivé',
+  },
+  notFound: {
+    title: 'Page introuvable',
+    text: 'La page que vous cherchez n’existe pas ou a été déplacée.',
+    backHome: 'Retour à l’accueil',
+  },
+  error: {
+    title: 'Une erreur est survenue',
+    text: 'Quelque chose s’est mal passé de notre côté. Réessayez dans un instant.',
+    retry: 'Réessayer',
   },
 };
 

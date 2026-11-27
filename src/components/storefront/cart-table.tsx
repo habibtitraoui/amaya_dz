@@ -23,6 +23,8 @@ export function CartTable({
     remove: string;
     minQtyError: string;
     stockError: string;
+    decreaseQuantity: string;
+    increaseQuantity: string;
   };
   locale: string;
 }) {
@@ -79,7 +81,7 @@ export function CartTable({
                     {line.productName}
                   </Link>
                   <p className="mt-0.5 text-[11px] text-ink-400">
-                    {line.colorFr} · <span dir="ltr">{line.sku}</span>
+                    {line.colorLocalized} · <span dir="ltr">{line.sku}</span>
                   </p>
                   {error && (
                     <p className="mt-1 flex items-start gap-1 text-[11px] font-medium text-red-600">
@@ -105,7 +107,7 @@ export function CartTable({
                     onClick={() => update(line.productId, line.variantId, line.quantity - 1)}
                     disabled={busy === key}
                     className="grid h-9 w-9 place-items-center rounded-full text-ink-600 hover:bg-ink-50 disabled:opacity-40"
-                    aria-label="Decrease"
+                    aria-label={labels.decreaseQuantity}
                   >
                     <Minus className="h-3 w-3" />
                   </button>
@@ -117,7 +119,7 @@ export function CartTable({
                     onClick={() => update(line.productId, line.variantId, line.quantity + 1)}
                     disabled={busy === key}
                     className="grid h-9 w-9 place-items-center rounded-full text-ink-600 hover:bg-ink-50 disabled:opacity-40"
-                    aria-label="Increase"
+                    aria-label={labels.increaseQuantity}
                   >
                     <Plus className="h-3 w-3" />
                   </button>

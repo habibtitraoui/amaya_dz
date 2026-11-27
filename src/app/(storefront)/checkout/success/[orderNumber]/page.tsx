@@ -49,17 +49,17 @@ export default async function CheckoutSuccessPage({
                 <Package className="h-4 w-4 text-brand-500" />
                 {order.orderNumber}
               </div>
-              <Badge tone="amber" dot>{dict.status.PENDING}</Badge>
+              <Badge tone="amber" dot>{dict.status[order.status as keyof typeof dict.status]}</Badge>
             </div>
             <ul className="divide-y divide-ink-100">
               {order.items.map((item) => (
                 <li key={item.id} className="flex items-center justify-between gap-3 px-5 py-3">
                   <div className="min-w-0">
-                    <p className="truncate text-[13px] font-semibold text-ink-900">{item.productNameFrSnapshot ?? item.productNameSnapshot}</p>
+                    <p className="truncate text-[13px] font-semibold text-ink-900">{item.productNameSnapshot ?? item.productNameFrSnapshot}</p>
                     <p className="text-[11px] text-ink-400">{item.colorSnapshot} × {item.quantity}</p>
                   </div>
                   <span className="text-[12.5px] font-bold text-ink-800 tabular-nums" dir="ltr">
-                    {formatDA(item.lineTotal, 'fr')}
+                    {formatDA(item.lineTotal, locale)}
                   </span>
                 </li>
               ))}
@@ -67,7 +67,7 @@ export default async function CheckoutSuccessPage({
             <div className="flex items-center justify-between border-t border-ink-100 px-5 py-3.5">
               <span className="text-[12.5px] font-bold text-ink-700">{dict.cart.total}</span>
               <span className="text-[15px] font-extrabold text-brand-600 tabular-nums" dir="ltr">
-                {formatDA(order.totalAmount, 'fr')}
+                {formatDA(order.totalAmount, locale)}
               </span>
             </div>
           </div>

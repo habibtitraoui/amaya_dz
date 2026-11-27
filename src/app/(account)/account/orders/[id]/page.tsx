@@ -95,7 +95,7 @@ export default async function AccountOrderDetailPage({ params }: { params: Promi
                   <Package className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-ink-900">{item.productNameFrSnapshot ?? item.productNameSnapshot}</p>
+                  <p className="truncate text-[13px] font-semibold text-ink-900">{item.productNameSnapshot ?? item.productNameFrSnapshot}</p>
                   <p className="text-[11px] text-ink-400">
                     {item.colorSnapshot} · <span dir="ltr">{item.skuSnapshot}</span> · ×{item.quantity}
                   </p>
@@ -154,7 +154,7 @@ export default async function AccountOrderDetailPage({ params }: { params: Promi
 
         {order.invoices.length > 0 && (
           <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
-            <h3 className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.14em] text-ink-400">FACTURE</h3>
+            <h3 className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.14em] text-ink-400">{dict.account.invoice}</h3>
             <ul className="space-y-2">
               {order.invoices.map((invoice) => (
                 <li key={invoice.id} className="flex items-center justify-between gap-3 rounded-xl bg-ink-50 px-3 py-2.5">

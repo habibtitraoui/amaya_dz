@@ -21,6 +21,7 @@ export default async function CheckoutPage() {
 
       <CheckoutForm
         quote={cart.quote}
+        locale={locale}
         user={user ? { name: user.name, email: user.email, phone: null } : null}
         labels={{
           customerInfo: dict.checkout.customerInfo,
