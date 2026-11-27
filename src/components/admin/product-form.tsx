@@ -332,7 +332,7 @@ export function ProductForm({
                   onChange={(e) =>
                     setForm((c) => ({ ...c, images: c.images.map((img, i) => (i === index ? { ...img, url: e.target.value } : img)) }))
                   }
-                  placeholder="/products/… ou https://…"
+                  placeholder="https://…"
                   className="h-9 text-[11px]"
                   dir="ltr"
                 />

@@ -139,6 +139,7 @@ app.get('/', (_req, res) => {
       'PUT  /api/admin/products/:id',
       'POST /api/admin/stock',
       'POST /api/admin/uploads',
+      'POST /api/admin/catalog-migration',
     ],
   });
 });
@@ -166,6 +167,7 @@ const routes: [string, string, Handler][] = [
   ['PUT', '/admin/products/:id', handlers.updateProductHandler],
   ['POST', '/admin/stock', handlers.adjustStockHandler],
   ['POST', '/admin/uploads', handlers.uploadImageHandler],
+  ['POST', '/admin/catalog-migration', handlers.migrateCatalogImagesHandler],
 ];
 
 for (const [method, path, handler] of routes) {

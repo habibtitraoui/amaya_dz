@@ -19,13 +19,22 @@ const EXT_BY_TYPE: Record<string, string> = {
 /** Vercel caps request bodies around 4.5 MB — stay safely under it. */
 const MAX_BYTES = 4 * 1024 * 1024;
 
-type StorageConfig = {
+export type StorageConfig = {
   s3: S3Client;
   bucket: string;
   endpoint: string;
 };
 
-function config(): StorageConfig {
+/** Cached per process: one S3 client is enough for every upload. */
+let cached: StorageConfig | null = null;
+
+/**
+ * Resolve the Neon Object Storage credentials. Throws when the environment is
+ * incomplete so callers surface a clear setup error instead of a vague 403.
+ */
+export function config(): StorageConfig {
+  if (cached) return cached;
+
   const endpoint = process.env.AWS_ENDPOINT_URL_S3?.replace(/\/+$/, '');
   const bucket = process.env.NEON_STORAGE_BUCKET;
   if (!endpoint || !bucket) {
@@ -45,7 +54,14 @@ function config(): StorageConfig {
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
     },
   });
-  return { s3, bucket, endpoint };
+  cached = { s3, bucket, endpoint };
+  return cached;
+}
+
+/** Public HTTPS URL for an object key inside the configured bucket. */
+export function publicUrlFor(key: string): string {
+  const { endpoint, bucket } = config();
+  return `${endpoint}/${bucket}/${key}`;
 }
 
 /**
@@ -80,6 +96,32 @@ export async function uploadImage(file: File): Promise<string> {
       ContentType: file.type,
       // Bucket-level `public_read` makes the object anonymous-readable;
       // no object ACL is needed (and Neon ignores canned ACLs).
+      CacheControl: 'public, max-age=31536000, immutable',
+    }),
+  );
+
+  return `${endpoint}/${bucket}/${key}`;
+}
+
+/**
+ * Upload a bundled catalog master to a *stable* key (`catalog/<dir>/<file>`).
+ * Stable keys make the operation idempotent: re-running the migration
+ * overwrites the same object instead of leaking duplicates, and deleting the
+ * files from `assets/` later does not break already-migrated databases.
+ */
+export async function uploadCatalogObject(
+  key: string,
+  body: Buffer,
+  contentType: string,
+): Promise<string> {
+  const { s3, bucket, endpoint } = config();
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
       CacheControl: 'public, max-age=31536000, immutable',
     }),
   );

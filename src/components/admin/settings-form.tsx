@@ -2,13 +2,31 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Save, Check } from 'lucide-react';
+import { Check, Image as ImageIcon, Loader2, Save, Upload } from 'lucide-react';
 import { Field, Input } from '@/components/ui/field';
 import { Button } from '@/components/ui/button';
+import { uploadImageFile } from '@/lib/upload';
 
-type Section = { key: string; label: string; hint?: string; type?: 'text' | 'number' };
+type Section = {
+  key: string;
+  label: string;
+  hint?: string;
+  type?: 'text' | 'number' | 'image';
+};
 
 const SECTIONS: { title: string; description: string; fields: Section[] }[] = [
+  {
+    title: 'Page d’accueil',
+    description: 'Visuel affiché dans la bannière principale de la boutique.',
+    fields: [
+      {
+        key: 'hero.image',
+        label: 'Image de bannière',
+        type: 'image',
+        hint: 'Téléversez un visuel (recommandé : carré, 1200 px) ou collez une URL.',
+      },
+    ],
+  },
   {
     title: 'Livraison',
     description: 'Le seuil de gratuité s’applique au sous-total hors livraison.',
@@ -40,6 +58,92 @@ const SECTIONS: { title: string; description: string; fields: Section[] }[] = [
     ],
   },
 ];
+
+/**
+ * Image setting: preview + "Téléverser" button that pushes the file to Object
+ * Storage and stores the returned public URL. Typing/pasting a URL still works.
+ */
+function ImageField({
+  label,
+  hint,
+  value,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const inputId = React.useId();
+  const [uploading, setUploading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  async function pick(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    const result = await uploadImageFile(file);
+    setUploading(false);
+    if (result.ok) onChange(result.url);
+    else setError(result.error);
+  }
+
+  return (
+    <div className="sm:col-span-2">
+      <Field label={label} hint={hint} htmlFor={inputId}>
+        <div className="flex flex-wrap items-start gap-3">
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-ink-100 bg-ink-50">
+            {value ? (
+              // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote URL
+              <img src={value} alt={label} className="h-full w-full object-cover" />
+            ) : (
+              <ImageIcon className="absolute inset-0 m-auto h-6 w-6 text-ink-300" />
+            )}
+          </div>
+          <div className="min-w-[220px] flex-1 space-y-2">
+            <Input
+              id={inputId}
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              placeholder="https://… ou /brand/…"
+              dir="ltr"
+            />
+            <div className="flex items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-ink-200 px-3 py-1.5 text-[11.5px] font-semibold text-ink-600 hover:border-brand-300 hover:text-brand-600">
+                {uploading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Upload className="h-3.5 w-3.5" />
+                )}
+                {uploading ? 'Téléversement…' : 'Téléverser un fichier'}
+                <input
+                  type="file"
+                  accept="image/webp,image/jpeg,image/png,image/avif"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(event) => {
+                    void pick(event.target.files?.[0] ?? null);
+                    event.target.value = '';
+                  }}
+                />
+              </label>
+              {value && (
+                <button
+                  type="button"
+                  onClick={() => onChange('')}
+                  className="text-[11.5px] font-semibold text-ink-400 hover:text-red-600"
+                >
+                  Retirer
+                </button>
+              )}
+            </div>
+            {error && <p className="text-[11.5px] text-red-600">{error}</p>}
+          </div>
+        </div>
+      </Field>
+    </div>
+  );
+}
 
 export function SettingsForm({ values }: { values: Record<string, unknown> }) {
   const router = useRouter();
@@ -86,16 +190,26 @@ export function SettingsForm({ values }: { values: Record<string, unknown> }) {
           <h2 className="text-[13px] font-extrabold text-ink-900">{section.title}</h2>
           <p className="mb-4 text-[11px] text-ink-400">{section.description}</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            {section.fields.map((field) => (
-              <Field key={field.key} label={field.label}>
-                <Input
-                  type={field.type === 'number' ? 'number' : 'text'}
+            {section.fields.map((field) =>
+              field.type === 'image' ? (
+                <ImageField
+                  key={field.key}
+                  label={field.label}
+                  hint={field.hint}
                   value={draft[field.key] ?? ''}
-                  onChange={(event) => setDraft({ ...draft, [field.key]: event.target.value })}
-                  dir={field.type === 'number' ? 'ltr' : undefined}
+                  onChange={(value) => setDraft({ ...draft, [field.key]: value })}
                 />
-              </Field>
-            ))}
+              ) : (
+                <Field key={field.key} label={field.label} hint={field.hint}>
+                  <Input
+                    type={field.type === 'number' ? 'number' : 'text'}
+                    value={draft[field.key] ?? ''}
+                    onChange={(event) => setDraft({ ...draft, [field.key]: event.target.value })}
+                    dir={field.type === 'number' ? 'ltr' : undefined}
+                  />
+                </Field>
+              ),
+            )}
           </div>
         </section>
       ))}

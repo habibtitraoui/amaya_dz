@@ -159,8 +159,17 @@ src/
 server/index.ts           serveur Express autonome (mêmes handlers)
 scripts/                  db, migrate, seed, reset, recette
 prisma/                   schéma (16 modèles) + migrations
+assets/catalog/           visuels de démo (produits, catégories) — hors de public/
 tests/                    unitaires + intégration §20
 ```
+
+**Images.** Les visuels produits et catégories ne sont pas servis par
+l'application : `assets/catalog/**` ne contient que les fichiers **maîtres** de
+démonstration, et les URL publiques vivent dans Neon Object Storage
+(`ProductImage.url`, `Category.image`, `ProductVariant.image`). Le seed les
+téléverse automatiquement ; une base déjà remplie se met à jour via
+**`/admin/settings` → Migrer les images**. Seuls le logo et les icônes restent
+dans `public/`.
 
 **Une seule implémentation des règles.** Next.js et le serveur Express appellent
 tous deux `src/lib/api/handlers.ts`. Le runtime par défaut du produit est Next.js ;

@@ -186,7 +186,7 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
 
               <Field label="Image">
                 <div className="flex gap-2">
-                  <Input value={editing.image} onChange={(event) => setEditing({ ...editing, image: event.target.value })} placeholder="/categories/… ou https://…" dir="ltr" />
+                  <Input value={editing.image} onChange={(event) => setEditing({ ...editing, image: event.target.value })} placeholder="https://…" dir="ltr" />
                   <label
                     className={cn(
                       'grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink-200 text-ink-500 hover:border-brand-300 hover:text-brand-600',

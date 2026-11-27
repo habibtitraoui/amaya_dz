@@ -187,8 +187,22 @@ If you want the 8 categories, 9 mobile-accessory products, 4 demo accounts, and 
 ```bash
 npm install
 npm run db:generate
-DATABASE_URL="postgresql://<user>:<password>@ep-xxxx.eu-central-1.aws.neon.tech/amaya?sslmode=require" npm run db:seed
+DATABASE_URL="postgresql://<user>:<password>@ep-xxxx.eu-central-1.aws.neon.tech/amaya?sslmode=require" \
+AWS_ENDPOINT_URL_S3="https://br-xxxx.storage.c-2.eu-central-1.aws.neon.tech" \
+AWS_REGION="eu-central-1" \
+AWS_ACCESS_KEY_ID="<token_id>" \
+AWS_SECRET_ACCESS_KEY="<nsk_…>" \
+NEON_STORAGE_BUCKET="amaya-media" \
+npm run db:seed
 ```
+
+> **Catalog artwork.** The demo images ship in `assets/catalog/**` — deliberately
+> **outside** `public/`, so they are never served by the app and never bloat the
+> build. The seed uploads each one to Object Storage (`catalog/products/…`,
+> `catalog/categories/…`) and stores the returned public URLs.
+> Without the `AWS_*` variables it falls back to copying the files into `public/`
+> so a bare `npm run dev` still renders images (`SEED_ASSET_MODE=public` forces
+> that behaviour explicitly).
 
 > **Security checklist if you run `db:seed` on a public URL:**
 > 1. Log in immediately at `https://<your-app>.vercel.app/login` with `admin@amaya.dz` / `Admin@2026`.
@@ -219,7 +233,21 @@ Run through these 5 quick checks after deploying:
    Vercel Serverless Functions have a read-only filesystem at runtime, so uploads go to **Neon Object Storage** — S3-compatible storage in the same Neon project (5 GB free, no credit card, image bytes never touch Postgres compute):
    - Provision it once in Neon: `npm i @neon/config && neon link`, add a `neon.ts` declaring `buckets: { 'amaya-media': { access: 'public_read' } }` (public read is required — storefront visitors load these URLs anonymously), then `neon deploy`. This writes the `AWS_*` variables; add `NEON_STORAGE_BUCKET=amaya-media` alongside them in Vercel (table in §3.3).
    - In `/admin/products` and `/admin/categories`, click **Téléverser un fichier**: the browser optimizes the image to WebP (≤1600 px, ~100–200 KB), `POST /api/admin/uploads` stores it in the bucket, and the returned public HTTPS URL is saved in `ProductImage.url` / `Category.image`. **No schema change** — pasting an external `https://…` URL into the same field still works (`next.config.ts` already allows all HTTPS remote image hosts).
-5. **French A4 Invoice PDF Generation:**
+5. **Existing demo artwork → Object Storage:**
+   An installation seeded before the move keeps `/products/…` and `/categories/…`
+   paths in the database, which no longer resolve once the files leave `public/`.
+   Fix it in one click: sign in as **Admin** → **`/admin/settings`** → **Migrer les images**.
+   The action uploads every master in `assets/catalog/**` to deterministic keys
+   (`catalog/products/…`, `catalog/categories/…`, so re-running never duplicates objects),
+   rewrites `ProductImage.url`, `ProductVariant.image`, `Category.image` and the homepage
+   banner, and reports how many references changed plus any it could not resolve.
+   It is **idempotent** — images already pointing at storage are left untouched — and the
+   same logic runs as `POST /api/admin/catalog-migration` for scripted use.
+
+   The banner image is now the **`hero.image`** setting (Section « Page d’accueil » in
+   `/admin/settings`), so it can be uploaded like any other picture — no code change needed.
+
+6. **French A4 Invoice PDF Generation:**
    Open an order in `/admin/orders`, issue an invoice, and verify both:
    - Printable HTML view: `/invoices/<invoiceId>?print=1`
    - Server-rendered PDF: `/invoices/<invoiceId>/pdf`
