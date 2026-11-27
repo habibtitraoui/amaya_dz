@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Loader2, Plus, Trash2, Save, AlertTriangle, ExternalLink, Upload } from 'lucide-react';
 import { saveProductAction } from '@/app/actions/admin';
-import { uploadImageFile } from '@/lib/upload';
+import { releaseStagedImage, stageImageFile, uploadStagedImage } from '@/lib/upload';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
@@ -33,7 +33,7 @@ export type ProductFormValues = {
   status: 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN' | 'ARCHIVED';
   isFeatured: boolean;
   translations: { locale: 'AR' | 'FR' | 'EN'; name: string; description: string }[];
-  images: { url: string; alt?: string }[];
+  images: { url: string; alt?: string; /** Present only for locally staged files — uploaded on submit. */ file?: File }[];
   variants: Variant[];
 };
 
@@ -51,7 +51,7 @@ export function ProductForm({
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<'FR' | 'AR' | 'EN'>('FR');
-  // `null` = idle, `'new'` = uploading a fresh image, number = replacing that row.
+  // `null` = idle, `'new'` = staging a fresh image, number = staging a replacement for that row.
   const [uploading, setUploading] = React.useState<number | 'new' | null>(null);
 
   const translation = (locale: 'AR' | 'FR' | 'EN') =>
@@ -99,15 +99,35 @@ export function ProductForm({
     setPending(true);
     setError(null);
     try {
+      // Staged (not-yet-uploaded) files go to Object Storage now, on submit —
+      // never on file selection.
+      const images: { url: string; alt?: string }[] = [];
+      for (const image of form.images) {
+        if (image.file) {
+          const uploaded = await uploadStagedImage({ file: image.file, previewUrl: image.url });
+          if (!uploaded.ok) {
+            setError(`Échec de l’envoi de l’image : ${uploaded.error}`);
+            setPending(false);
+            return;
+          }
+          images.push({ url: uploaded.url, alt: image.alt });
+        } else if (image.url.trim()) {
+          images.push({ url: image.url.trim(), alt: image.alt });
+        }
+      }
+      // Uploads succeeded: drop the local `file` refs so a failed save doesn't
+      // re-upload them, and previews now point at the stored URLs.
+      setForm((current) => ({ ...current, images }));
       const result = await saveProductAction(
         {
           ...form,
-          images: form.images.filter((image) => image.url.trim()),
+          images,
           variants: form.variants.map((variant) => ({ ...variant, image: variant.image || null })),
         },
         form.id,
       );
       if (result.ok) {
+        for (const image of form.images) releaseStagedImage(image.file ? { file: image.file, previewUrl: image.url } : null);
         router.push('/admin/products');
         router.refresh();
       } else {
@@ -127,18 +147,32 @@ export function ProductForm({
     setUploading(index ?? 'new');
     setError(null);
     try {
-      const result = await uploadImageFile(file);
-      if (!result.ok) {
-        setError(result.error);
+      const staged = await stageImageFile(file);
+      if (!staged.ok) {
+        setError(staged.error);
         return;
       }
-      setForm((current) => ({
-        ...current,
-        images:
-          index === null
-            ? [...current.images.filter((image) => image.url.trim()), { url: result.url }]
-            : current.images.map((image, i) => (i === index ? { ...image, url: result.url } : image)),
-      }));
+      // No request leaves the browser here — the file is only optimized and
+      // kept in memory with a blob: preview URL until the form is submitted.
+      setForm((current) => {
+        if (index === null) {
+          return {
+            ...current,
+            images: [
+              ...current.images.filter((image) => image.url.trim()),
+              { url: staged.image.previewUrl, file: staged.image.file },
+            ],
+          };
+        }
+        return {
+          ...current,
+          images: current.images.map((image, i) => {
+            if (i !== index) return image;
+            releaseStagedImage(image.file ? { file: image.file, previewUrl: image.url } : null);
+            return { ...image, url: staged.image.previewUrl, file: staged.image.file };
+          }),
+        };
+      });
     } finally {
       setUploading(null);
     }
@@ -330,7 +364,15 @@ export function ProductForm({
                 <Input
                   value={image.url}
                   onChange={(e) =>
-                    setForm((c) => ({ ...c, images: c.images.map((img, i) => (i === index ? { ...img, url: e.target.value } : img)) }))
+                    setForm((c) => ({
+                      ...c,
+                      images: c.images.map((img, i) => {
+                        if (i !== index) return img;
+                        // Manual URL entry drops any staged file for this row.
+                        if (img.file) releaseStagedImage({ file: img.file, previewUrl: img.url });
+                        return { url: e.target.value, alt: img.alt };
+                      }),
+                    }))
                   }
                   placeholder="https://…"
                   className="h-9 text-[11px]"
@@ -341,15 +383,21 @@ export function ProductForm({
                     'grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-400 hover:bg-brand-50 hover:text-brand-600',
                     uploading === index && 'pointer-events-none opacity-50',
                   )}
-                  title="Téléverser un fichier (Neon Object Storage)"
-                  aria-label="Téléverser une image"
+                  title="Choisir un fichier — envoyé uniquement à l’enregistrement"
+                  aria-label="Choisir une image (envoyée à l’enregistrement)"
                 >
                   {uploading === index ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                   {fileInput(index)}
                 </label>
                 <button
                   type="button"
-                  onClick={() => setForm((c) => ({ ...c, images: c.images.filter((_, i) => i !== index) }))}
+                  onClick={() =>
+                    setForm((c) => {
+                      const removed = c.images[index];
+                      if (removed?.file) releaseStagedImage({ file: removed.file, previewUrl: removed.url });
+                      return { ...c, images: c.images.filter((_, i) => i !== index) };
+                    })
+                  }
                   className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-400 hover:bg-red-50 hover:text-red-600"
                   aria-label="Supprimer l’image"
                 >
@@ -371,13 +419,13 @@ export function ProductForm({
               )}
             >
               {uploading === 'new' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-              {uploading === 'new' ? 'Téléversement…' : 'Téléverser un fichier'}
+              {uploading === 'new' ? 'Préparation…' : 'Ajouter un fichier'}
               {fileInput(null)}
             </label>
           </div>
           <p className="mt-2 text-[10px] leading-relaxed text-ink-400">
-            Téléversez depuis votre ordinateur (WebP optimisé, max 4 Mo — stocké sur Neon Object
-            Storage) ou collez une URL existante.
+            Choisissez un fichier depuis votre ordinateur (optimisé en WebP, max 4 Mo) — il n’est
+            envoyé au stockage que lorsque vous cliquez sur « Enregistrer » — ou collez une URL existante.
           </p>
         </section>
 

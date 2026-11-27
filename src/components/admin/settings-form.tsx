@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Check, Image as ImageIcon, Loader2, Save, Upload } from 'lucide-react';
 import { Field, Input } from '@/components/ui/field';
 import { Button } from '@/components/ui/button';
-import { uploadImageFile } from '@/lib/upload';
+import { cn } from '@/lib/utils';
+import { releaseStagedImage, stageImageFile, uploadStagedImage, type StagedImage } from '@/lib/upload';
 
 type Section = {
   key: string;
@@ -23,7 +24,7 @@ const SECTIONS: { title: string; description: string; fields: Section[] }[] = [
         key: 'hero.image',
         label: 'Image de bannière',
         type: 'image',
-        hint: 'Téléversez un visuel (recommandé : carré, 1200 px) ou collez une URL.',
+        hint: 'Choisissez un visuel (recommandé : carré, 1200 px) ou collez une URL — envoyé au stockage à l’enregistrement.',
       },
     ],
   },
@@ -60,33 +61,30 @@ const SECTIONS: { title: string; description: string; fields: Section[] }[] = [
 ];
 
 /**
- * Image setting: preview + "Téléverser" button that pushes the file to Object
- * Storage and stores the returned public URL. Typing/pasting a URL still works.
+ * Image setting: preview + "Téléverser" button. Picking a file only stages it
+ * locally (optimized + blob preview) — the file is uploaded to Object Storage
+ * when the whole form is submitted, never on selection. Pasting a URL works too.
  */
 function ImageField({
   label,
   hint,
   value,
+  staging,
+  error,
   onChange,
+  onPickFile,
+  onClear,
 }: {
   label: string;
   hint?: string;
   value: string;
+  staging: boolean;
+  error: string | null;
   onChange: (value: string) => void;
+  onPickFile: (file: File) => void;
+  onClear: () => void;
 }) {
   const inputId = React.useId();
-  const [uploading, setUploading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  async function pick(file: File | null) {
-    if (!file) return;
-    setUploading(true);
-    setError(null);
-    const result = await uploadImageFile(file);
-    setUploading(false);
-    if (result.ok) onChange(result.url);
-    else setError(result.error);
-  }
 
   return (
     <div className="sm:col-span-2">
@@ -94,7 +92,7 @@ function ImageField({
         <div className="flex flex-wrap items-start gap-3">
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-ink-100 bg-ink-50">
             {value ? (
-              // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote URL
+              // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote/blob URL
               <img src={value} alt={label} className="h-full w-full object-cover" />
             ) : (
               <ImageIcon className="absolute inset-0 m-auto h-6 w-6 text-ink-300" />
@@ -109,20 +107,26 @@ function ImageField({
               dir="ltr"
             />
             <div className="flex items-center gap-3">
-              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-ink-200 px-3 py-1.5 text-[11.5px] font-semibold text-ink-600 hover:border-brand-300 hover:text-brand-600">
-                {uploading ? (
+              <label
+                className={cn(
+                  'inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-ink-200 px-3 py-1.5 text-[11.5px] font-semibold text-ink-600 hover:border-brand-300 hover:text-brand-600',
+                  staging && 'pointer-events-none opacity-60',
+                )}
+              >
+                {staging ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <Upload className="h-3.5 w-3.5" />
                 )}
-                {uploading ? 'Téléversement…' : 'Téléverser un fichier'}
+                {staging ? 'Préparation…' : 'Choisir un fichier'}
                 <input
                   type="file"
                   accept="image/webp,image/jpeg,image/png,image/avif"
                   className="hidden"
-                  disabled={uploading}
+                  disabled={staging}
                   onChange={(event) => {
-                    void pick(event.target.files?.[0] ?? null);
+                    const file = event.target.files?.[0];
+                    if (file) onPickFile(file);
                     event.target.value = '';
                   }}
                 />
@@ -130,13 +134,14 @@ function ImageField({
               {value && (
                 <button
                   type="button"
-                  onClick={() => onChange('')}
+                  onClick={onClear}
                   className="text-[11.5px] font-semibold text-ink-400 hover:text-red-600"
                 >
                   Retirer
                 </button>
               )}
             </div>
+            <p className="text-[10.5px] text-ink-400">Le fichier est envoyé au stockage uniquement lors de l’enregistrement.</p>
             {error && <p className="text-[11.5px] text-red-600">{error}</p>}
           </div>
         </div>
@@ -160,6 +165,62 @@ export function SettingsForm({ values }: { values: Record<string, unknown> }) {
   const [pending, setPending] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // Files picked but not yet uploaded — sent to storage on submit only.
+  const [stagedImages, setStagedImages] = React.useState<Record<string, StagedImage>>({});
+  const [stagingKey, setStagingKey] = React.useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string | null>>({});
+  const stagedRef = React.useRef(stagedImages);
+  stagedRef.current = stagedImages;
+
+  // Release any remaining object URLs when the form unmounts.
+  React.useEffect(
+    () => () => {
+      for (const staged of Object.values(stagedRef.current)) releaseStagedImage(staged);
+    },
+    [],
+  );
+
+  async function pickImage(key: string, file: File) {
+    setStagingKey(key);
+    setFieldErrors((current) => ({ ...current, [key]: null }));
+    try {
+      const staged = await stageImageFile(file);
+      if (!staged.ok) {
+        setFieldErrors((current) => ({ ...current, [key]: staged.error }));
+        return;
+      }
+      setStagedImages((current) => {
+        releaseStagedImage(current[key]);
+        return { ...current, [key]: staged.image };
+      });
+      setDraft((current) => ({ ...current, [key]: staged.image.previewUrl }));
+    } finally {
+      setStagingKey(null);
+    }
+  }
+
+  function clearImage(key: string) {
+    setStagedImages((current) => {
+      releaseStagedImage(current[key]);
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+    setFieldErrors((current) => ({ ...current, [key]: null }));
+    setDraft((current) => ({ ...current, [key]: '' }));
+  }
+
+  function typeImageUrl(key: string, value: string) {
+    // Manual URL entry drops any staged file for that field.
+    setStagedImages((current) => {
+      if (!current[key]) return current;
+      releaseStagedImage(current[key]);
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+    setDraft((current) => ({ ...current, [key]: value }));
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -167,8 +228,23 @@ export function SettingsForm({ values }: { values: Record<string, unknown> }) {
     setError(null);
     try {
       const { saveSettingsAction } = await import('@/app/actions/settings');
+      // Upload staged files now, on submit — never on file selection.
+      const resolved = { ...draft };
+      for (const [key, staged] of Object.entries(stagedImages)) {
+        const uploaded = await uploadStagedImage(staged);
+        if (!uploaded.ok) {
+          setError(`Échec de l’envoi de l’image : ${uploaded.error}`);
+          setPending(false);
+          return;
+        }
+        resolved[key] = uploaded.url;
+      }
+      // Drop staged previews: keep resolved URLs so a failed save retries cleanly.
+      for (const staged of Object.values(stagedImages)) releaseStagedImage(staged);
+      setStagedImages({});
+      setDraft(resolved);
       const payload = Object.fromEntries(
-        Object.entries(draft).map(([key, value]) => [key, value.trim() === '' ? null : /^\d+$/.test(value) ? Number(value) : value]),
+        Object.entries(resolved).map(([key, value]) => [key, value.trim() === '' ? null : /^\d+$/.test(value) ? Number(value) : value]),
       );
       const result = await saveSettingsAction(payload);
       if (result.ok) {
@@ -197,7 +273,11 @@ export function SettingsForm({ values }: { values: Record<string, unknown> }) {
                   label={field.label}
                   hint={field.hint}
                   value={draft[field.key] ?? ''}
-                  onChange={(value) => setDraft({ ...draft, [field.key]: value })}
+                  staging={stagingKey === field.key}
+                  error={fieldErrors[field.key] ?? null}
+                  onChange={(value) => typeImageUrl(field.key, value)}
+                  onPickFile={(file) => void pickImage(field.key, file)}
+                  onClear={() => clearImage(field.key)}
                 />
               ) : (
                 <Field key={field.key} label={field.label} hint={field.hint}>
