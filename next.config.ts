@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
       { protocol: 'http', hostname: 'localhost' },
     ],
   },
+  // The catalog migration reads the demo masters from disk at runtime, so they
+  // must ship with the serverless functions that serve /api/admin/catalog-migration.
+  outputFileTracingIncludes: {
+    '/api/admin/catalog-migration': ['./assets/catalog/**/*'],
+  },
 };
 
 export default nextConfig;
