@@ -40,14 +40,6 @@ function buildSections(labels: Dictionary['admin']['settings']): { title: string
       ],
     },
     {
-      title: labels.minQtySection,
-      description: labels.minQtyDescription,
-      fields: [
-        { key: 'wholesale.minQty', label: labels.wholesaleMinQty, type: 'number', ltr: true },
-        { key: 'superWholesale.minQty', label: labels.superWholesaleMinQty, type: 'number', ltr: true },
-      ],
-    },
-    {
       title: labels.companySection,
       description: labels.companyDescription,
       fields: [
@@ -67,7 +59,7 @@ function buildSections(labels: Dictionary['admin']['settings']): { title: string
 /**
  * Image setting: preview + upload button. Picking a file only stages it
  * locally (optimized + blob preview) — the file is uploaded to Object Storage
- * when the whole form is submitted, never on selection. Pasting a URL works too.
+ * when the whole form is submitted, never on selection.
  */
 function ImageField({
   label,
@@ -76,7 +68,6 @@ function ImageField({
   staging,
   error,
   labels,
-  onChange,
   onPickFile,
   onClear,
 }: {
@@ -85,17 +76,14 @@ function ImageField({
   value: string;
   staging: boolean;
   error: string | null;
-  labels: Pick<Dictionary['admin']['settings'], 'urlPlaceholder' | 'staging' | 'chooseFile' | 'remove' | 'deferredUploadNote'>;
-  onChange: (value: string) => void;
+  labels: Pick<Dictionary['admin']['settings'], 'staging' | 'chooseFile' | 'remove' | 'deferredUploadNote'>;
   onPickFile: (file: File) => void;
   onClear: () => void;
 }) {
-  const inputId = React.useId();
-
   return (
     <div className="sm:col-span-2">
-      <Field label={label} hint={hint} htmlFor={inputId}>
-        <div className="flex flex-wrap items-start gap-3">
+      <Field label={label} hint={hint}>
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-ink-100 bg-ink-50">
             {value ? (
               // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote/blob URL
@@ -105,17 +93,10 @@ function ImageField({
             )}
           </div>
           <div className="min-w-[220px] flex-1 space-y-2">
-            <Input
-              id={inputId}
-              value={value}
-              onChange={(event) => onChange(event.target.value)}
-              placeholder={labels.urlPlaceholder}
-              dir="ltr"
-            />
             <div className="flex items-center gap-3">
               <label
                 className={cn(
-                  'inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-ink-200 px-3 py-1.5 text-[11.5px] font-semibold text-ink-600 hover:border-brand-300 hover:text-brand-600',
+                  'inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-ink-200 px-3.5 py-2 text-[12px] font-semibold text-ink-600 transition-colors hover:border-brand-300 hover:text-brand-600',
                   staging && 'pointer-events-none opacity-60',
                 )}
               >
@@ -223,18 +204,6 @@ export function SettingsForm({
     setDraft((current) => ({ ...current, [key]: '' }));
   }
 
-  function typeImageUrl(key: string, value: string) {
-    // Manual URL entry drops any staged file for that field.
-    setStagedImages((current) => {
-      if (!current[key]) return current;
-      releaseStagedImage(current[key]);
-      const next = { ...current };
-      delete next[key];
-      return next;
-    });
-    setDraft((current) => ({ ...current, [key]: value }));
-  }
-
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setPending(true);
@@ -289,7 +258,6 @@ export function SettingsForm({
                   staging={stagingKey === field.key}
                   error={fieldErrors[field.key] ?? null}
                   labels={labels}
-                  onChange={(value) => typeImageUrl(field.key, value)}
                   onPickFile={(file) => void pickImage(field.key, file)}
                   onClear={() => clearImage(field.key)}
                 />

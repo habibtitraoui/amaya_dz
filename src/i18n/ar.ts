@@ -56,6 +56,7 @@ const ar: DictionaryShape = {
     address: 'العنوان',
     city: 'المدينة',
     wilaya: 'الولاية',
+    selectWilaya: 'اختر الولاية',
     notes: 'ملاحظات',
     details: 'التفاصيل',
     view: 'عرض',
@@ -114,6 +115,7 @@ const ar: DictionaryShape = {
   },
   product: {
     addToCart: 'أضف إلى السلة',
+    buyNow: 'اطلب الآن',
     added: 'أُضيف إلى السلة',
     outOfStock: 'نفدت الكمية',
     inStock: 'متوفر',
@@ -255,6 +257,8 @@ const ar: DictionaryShape = {
   account: {
     title: 'حسابي',
     overview: 'نظرة عامة',
+    profileSettings: 'إعدادات الملف الشخصي',
+    profileSettingsSubtitle: 'إدارة معلوماتك الشخصية وعنوانك وكلمة المرور.',
     info: 'معلومات الحساب',
     customerType: 'نوع العميل',
     businessName: 'الاسم التجاري',

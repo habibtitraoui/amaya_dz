@@ -44,6 +44,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         locale={locale}
         labels={{
           addToCart: dict.product.addToCart,
+          buyNow: dict.product.buyNow,
           added: dict.product.added,
           outOfStock: dict.product.outOfStock,
           inStock: dict.product.inStock,

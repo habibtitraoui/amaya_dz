@@ -6,6 +6,7 @@ import { Loader2, Save, KeyRound, Copy, Check, UserX, UserCheck } from 'lucide-r
 import { createCustomerAction, suspendCustomerAction, updateCustomerAction } from '@/app/actions/admin';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
+import { WilayaSelect } from '@/components/ui/wilaya-select';
 import type { Dictionary } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -111,7 +112,7 @@ export function CustomerForm({
               <Input value={form.city} onChange={(e) => set('city', e.target.value)} />
             </Field>
             <Field label={labels.wilaya}>
-              <Input value={form.wilaya} onChange={(e) => set('wilaya', e.target.value)} />
+              <WilayaSelect value={form.wilaya} onChange={(value) => set('wilaya', value)} />
             </Field>
           </div>
           <div className="mt-4">

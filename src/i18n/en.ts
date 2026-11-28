@@ -56,6 +56,7 @@ const en: DictionaryShape = {
     address: 'Address',
     city: 'City',
     wilaya: 'Wilaya / Province',
+    selectWilaya: 'Select a wilaya',
     notes: 'Notes',
     details: 'Details',
     view: 'View',
@@ -114,6 +115,7 @@ const en: DictionaryShape = {
   },
   product: {
     addToCart: 'Add to cart',
+    buyNow: 'Buy now',
     added: 'Added to cart',
     outOfStock: 'Out of stock',
     inStock: 'In stock',
@@ -255,6 +257,8 @@ const en: DictionaryShape = {
   account: {
     title: 'My account',
     overview: 'Overview',
+    profileSettings: 'Profile settings',
+    profileSettingsSubtitle: 'Manage your personal details, address, and password.',
     info: 'Account information',
     customerType: 'Customer type',
     businessName: 'Business name',

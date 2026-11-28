@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Minus, Plus, ShoppingBag, Check, Loader2, ImageOff, Info, Tag } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, Check, Loader2, ImageOff, Info, Tag, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDA } from '@/lib/money';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import type { ProductView } from '@/lib/serializers';
 
 type Labels = {
   addToCart: string;
+  buyNow: string;
   added: string;
   outOfStock: string;
   inStock: string;
@@ -58,7 +59,7 @@ export function ProductDetail({
   );
   const [activeImage, setActiveImage] = React.useState(0);
   const [quantity, setQuantity] = React.useState(product.prices.effective.minQuantity);
-  const [state, setState] = React.useState<'idle' | 'adding' | 'added' | 'error'>('idle');
+  const [state, setState] = React.useState<'idle' | 'adding' | 'buying' | 'added' | 'error'>('idle');
   const [message, setMessage] = React.useState<string | null>(null);
 
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0] ?? null;
@@ -98,6 +99,24 @@ export function ProductDetail({
       setState('added');
       router.refresh();
       window.setTimeout(() => setState('idle'), 2600);
+    } else {
+      setState('error');
+      setMessage(result.error ?? labels.error);
+    }
+  }
+
+  async function buyNow() {
+    if (!variantId || outOfStock) return;
+    if (quantity < minQty) {
+      setState('error');
+      setMessage(labels.quantityBelowMin.replace('{count}', String(minQty)));
+      return;
+    }
+    setState('buying');
+    setMessage(null);
+    const result = await cart.add({ productId: product.id, variantId, quantity });
+    if (result.ok) {
+      router.push('/checkout');
     } else {
       setState('error');
       setMessage(result.error ?? labels.error);
@@ -326,22 +345,42 @@ export function ProductDetail({
             </div>
           </div>
 
-          <Button
-            type="button"
-            size="lg"
-            onClick={addToCart}
-            disabled={outOfStock || state === 'adding' || !variantId}
-            className="h-11 flex-1 min-w-44"
-          >
-            {state === 'adding' ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : state === 'added' ? (
-              <Check className="h-4 w-4" />
-            ) : (
-              <ShoppingBag className="h-4 w-4" />
+          <div className="flex flex-1 flex-wrap gap-2.5 min-w-56">
+            <Button
+              type="button"
+              size="lg"
+              onClick={addToCart}
+              disabled={outOfStock || state === 'adding' || state === 'buying' || !variantId}
+              className="h-11 flex-1 min-w-36 px-5 text-[14px]"
+            >
+              {state === 'adding' ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : state === 'added' ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <ShoppingBag className="h-4 w-4" />
+              )}
+              {outOfStock ? labels.outOfStock : state === 'added' ? labels.added : labels.addToCart}
+            </Button>
+
+            {!outOfStock && (
+              <Button
+                type="button"
+                variant="dark"
+                size="lg"
+                onClick={buyNow}
+                disabled={state === 'adding' || state === 'buying' || !variantId}
+                className="h-11 flex-1 min-w-36 px-5 text-[14px]"
+              >
+                {state === 'buying' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                )}
+                {labels.buyNow}
+              </Button>
             )}
-            {outOfStock ? labels.outOfStock : state === 'added' ? labels.added : labels.addToCart}
-          </Button>
+          </div>
         </div>
 
         <div className="mt-2 flex items-center justify-between text-[12px]">
