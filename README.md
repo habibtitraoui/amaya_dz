@@ -9,7 +9,7 @@ français et anglais, et des **factures toujours en français** au format A4.
 ## Sommaire
 
 1. [Démarrage rapide](#démarrage-rapide)
-2. [Comptes de démonstration](#comptes-de-démonstration)
+2. [Comptes et accès](#comptes-et-accès)
 3. [Paliers tarifaires](#paliers-tarifaires)
 4. [Rôles & permissions](#rôles--permissions)
 5. [Cycle de vie d'une commande](#cycle-de-vie-dune-commande)
@@ -46,18 +46,12 @@ Autres commandes :
 | `npm test` | Tests unitaires + recette §20 |
 | `npm run build && npm start` | Build de production |
 
-## Comptes de démonstration
-
-| Rôle | Email | Mot de passe |
-| --- | --- | --- |
-| Administrateur | `admin@amaya.dz` | `Admin@2026` |
-| Superviseur | `superviseur@amaya.dz` | `Super@2026` |
-| Client gros | `gros@boutique.dz` | `Gros@2026` |
-| Client super gros | `supergros@distrib.dz` | `Super@2026` |
+## Comptes et accès
 
 Aucune inscription publique : les comptes professionnels sont **créés par le
 personnel** depuis `/admin/customers`. Les visiteurs peuvent commander au détail
-en tant qu'invités.
+en tant qu'invités. Les comptes de démonstration utilisés par le seed sont
+réservés au développement et ne doivent jamais être utilisés en production.
 
 ## Paliers tarifaires
 

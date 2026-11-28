@@ -801,11 +801,7 @@ async function main() {
     skipDuplicates: true,
   });
 
-  console.log('\n[seed] AMAYA demo data ready:');
-  console.log('  Admin        admin@amaya.dz        / Admin@2026');
-  console.log('  Supervisor   superviseur@amaya.dz  / Super@2026');
-  console.log('  Wholesale    gros@boutique.dz      / Gros@2026');
-  console.log('  Super-whol.  supergros@distrib.dz  / Super@2026');
+  console.log('\n[seed] AMAYA demo data ready. Demo accounts are for development only.');
 }
 
 main()

@@ -250,8 +250,6 @@ const frRaw = {
     noAccount: 'Les comptes professionnels sont créés par AMAYA.',
     noAccountText: 'Vous êtes revendeur ? Demandez la création de votre compte en nous contactant.',
     contactUs: 'Nous contacter',
-    demoTitle: 'Comptes de démonstration',
-    demoText: 'Utilisez un compte ci-dessous pour découvrir la plateforme.',
     logoutSuccess: 'Vous êtes déconnecté.',
     changePassword: 'Changer le mot de passe',
     currentPassword: 'Mot de passe actuel',

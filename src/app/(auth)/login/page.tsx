@@ -13,13 +13,6 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: dict.nav.login };
 }
 
-const DEMO_ACCOUNTS = [
-  { role: 'Admin', email: 'admin@amaya.dz', password: 'Admin@2026', tone: 'bg-ink-900 text-white' },
-  { role: 'Supervisor', email: 'superviseur@amaya.dz', password: 'Super@2026', tone: 'bg-ink-100 text-ink-800' },
-  { role: 'Wholesale', email: 'gros@boutique.dz', password: 'Gros@2026', tone: 'bg-sky-50 text-sky-800' },
-  { role: 'Super Wholesale', email: 'supergros@distrib.dz', password: 'Super@2026', tone: 'bg-violet-50 text-violet-800' },
-];
-
 export default async function LoginPage() {
   const locale = await getLocale();
   const dict = await getDictionary(locale);
@@ -28,7 +21,6 @@ export default async function LoginPage() {
 
   return (
     <LoginForm
-      locale={locale}
       contactEmailHref={contact.emailHref}
       labels={{
         title: dict.auth.loginTitle,
@@ -43,10 +35,7 @@ export default async function LoginPage() {
         noAccount: dict.auth.noAccount,
         noAccountText: dict.auth.noAccountText,
         contactUs: dict.auth.contactUs,
-        demoTitle: dict.auth.demoTitle,
-        demoText: dict.auth.demoText,
       }}
-      demoAccounts={DEMO_ACCOUNTS}
     />
   );
 }
