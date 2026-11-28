@@ -11,6 +11,7 @@ import { Field, Input, Textarea } from '@/components/ui/field';
 import { Badge } from '@/components/ui/badge';
 import type { Dictionary, Locale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { DeleteConfirmButton } from '@/components/admin/delete-confirm-button';
 
 type CategoryRow = {
   id: string;
@@ -184,6 +185,20 @@ export function CategoryManager({
                 <button type="button" onClick={() => open(category)} className="grid h-8 w-8 place-items-center rounded-lg text-ink-400 hover:bg-ink-50 hover:text-brand-600" aria-label={labels.editAria}>
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
+                <DeleteConfirmButton
+                  entity="category"
+                  entityId={category.id}
+                  entityName={category.nameLocalized || category.slug}
+                  labels={{
+                    ariaLabel: labels.deleteAria,
+                    title: labels.deleteTitle,
+                    message: labels.deleteMessage,
+                    confirm: labels.deleteConfirm,
+                    cancel: labels.deleteCancel,
+                    deleting: labels.deletePending,
+                    error: labels.deleteError,
+                  }}
+                />
               </div>
             </div>
           </div>

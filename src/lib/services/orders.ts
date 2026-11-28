@@ -306,6 +306,71 @@ export async function cancelOwnOrder(orderId: string, customerId: string, custom
   });
 }
 
+/**
+ * Permanently remove an admin order and all of its invoice versions. Orders in
+ * CONFIRMED, PREPARING or READY still hold stock, so those reservations are
+ * released before the order is removed. The invoice rows are deleted first
+ * explicitly; InvoiceItem rows then follow their cascade constraint.
+ */
+export async function deleteOrder(orderId: string, actor: { id: string; name: string }) {
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: true,
+        invoices: { select: { id: true, number: true } },
+      },
+    });
+    if (!order) throw new AppError('NOT_FOUND', 'Order not found');
+
+    const releasesStock = order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'READY';
+    if (releasesStock) {
+      for (const item of order.items) {
+        if (!item.variantId) continue;
+        const updated = await tx.$executeRawUnsafe(
+          `UPDATE "ProductVariant"
+             SET "reservedQuantity" = "reservedQuantity" - $1, "updatedAt" = now()
+           WHERE "id" = $2 AND "reservedQuantity" >= $1`,
+          item.quantity,
+          item.variantId,
+        );
+        if (updated === 0) {
+          throw new AppError('CONFLICT', `Stock reservation for ${item.skuSnapshot} could not be released`);
+        }
+        const variant = await tx.productVariant.findUnique({ where: { id: item.variantId } });
+        await tx.stockMovement.create({
+          data: {
+            variantId: item.variantId,
+            type: 'RELEASE',
+            quantity: item.quantity,
+            resultingQuantity: variant?.stockQuantity ?? 0,
+            orderId: order.id,
+            userId: actor.id,
+            reason: `Released when ${order.orderNumber} was deleted`,
+          },
+        });
+      }
+    }
+
+    const invoiceCount = order.invoices.length;
+    await tx.invoice.deleteMany({ where: { orderId: order.id } });
+    await tx.order.delete({ where: { id: order.id } });
+    await tx.auditLog.create({
+      data: {
+        actorId: actor.id,
+        actorName: actor.name,
+        action: 'order.delete',
+        entityType: 'Order',
+        entityId: order.id,
+        summary: `Order ${order.orderNumber} deleted${invoiceCount > 0 ? ` with ${invoiceCount} invoice(s)` : ''}`,
+        metadata: { orderNumber: order.orderNumber, invoiceCount } as never,
+      },
+    });
+
+    return { id: order.id, orderNumber: order.orderNumber, invoiceCount };
+  });
+}
+
 /** Issue (or re-issue) a French invoice, snapshotting every value. */
 export async function issueInvoice(orderId: string, actor: { id: string; name: string }) {
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });

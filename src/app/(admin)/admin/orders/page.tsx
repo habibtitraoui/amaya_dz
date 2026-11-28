@@ -8,6 +8,7 @@ import { formatDateTime, cn } from '@/lib/utils';
 import { ORDER_STATUSES, type OrderStatus } from '@/lib/pricing';
 import { Badge } from '@/components/ui/badge';
 import { OrderStatusSelect } from '@/components/admin/order-status-select';
+import { DeleteConfirmButton } from '@/components/admin/delete-confirm-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -111,6 +112,7 @@ export default async function AdminOrdersPage({
                 <th className="px-4 py-2.5 text-start font-bold">{copy.colStatus}</th>
                 <th className="px-4 py-2.5 text-start font-bold">{copy.colInvoice}</th>
                 <th className="px-4 py-2.5 text-end font-bold">{copy.colTotal}</th>
+                <th className="px-4 py-2.5 text-end font-bold">{copy.colActions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-100">
@@ -163,11 +165,29 @@ export default async function AdminOrdersPage({
                   <td className="px-4 py-3 text-end text-[12.5px] font-bold text-ink-900 tabular-nums" dir="ltr">
                     {formatDA(order.totalAmount, locale)}
                   </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end">
+                      <DeleteConfirmButton
+                        entity="order"
+                        entityId={order.id}
+                        entityName={order.orderNumber}
+                        labels={{
+                          ariaLabel: copy.deleteAria,
+                          title: copy.deleteTitle,
+                          message: copy.deleteMessage,
+                          confirm: copy.deleteConfirm,
+                          cancel: copy.deleteCancel,
+                          deleting: copy.deletePending,
+                          error: copy.deleteError,
+                        }}
+                      />
+                    </div>
+                  </td>
                 </tr>
               ))}
               {orders.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center">
+                  <td colSpan={8} className="px-4 py-16 text-center">
                     <ShoppingCart className="mx-auto h-7 w-7 text-ink-300" />
                     <p className="mt-2 text-[12.5px] text-ink-400">{copy.empty}</p>
                   </td>

@@ -5,11 +5,12 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser, can } from '@/lib/auth';
 import { AppError, toActionState, type ActionState } from '@/lib/errors';
-import { changeOrderStatus } from '@/lib/services/orders';
+import { changeOrderStatus, deleteOrder } from '@/lib/services/orders';
 import { issueInvoice } from '@/lib/services/orders';
 import { adjustStock } from '@/lib/services/inventory';
 import { createCustomer, suspendCustomer, updateCustomer } from '@/lib/services/customers';
-import { createProduct, setProductStatus, toggleFeatured, updateProduct } from '@/lib/services/products';
+import { createProduct, deleteProduct, setProductStatus, toggleFeatured, updateProduct } from '@/lib/services/products';
+import { deleteCategory } from '@/lib/services/catalog';
 import { logAudit } from '@/lib/audit';
 import { hashPassword } from '@/lib/password';
 import { ORDER_STATUSES } from '@/lib/pricing';
@@ -85,6 +86,19 @@ export async function issueInvoiceAction(orderId: string): Promise<ActionState> 
     const invoice = await issueInvoice(orderId, { id: user.id, name: user.name });
     refresh();
     return { ok: true, data: { id: invoice.id, number: invoice.number } };
+  } catch (error) {
+    return toActionState(error);
+  }
+}
+
+export async function deleteOrderAction(input: unknown): Promise<ActionState> {
+  try {
+    const user = await actor('manageOrders');
+    const parsed = z.object({ id: z.string().min(1) }).safeParse(input);
+    if (!parsed.success) throw new AppError('VALIDATION', 'Invalid order');
+    const deleted = await deleteOrder(parsed.data.id, { id: user.id, name: user.name });
+    refresh();
+    return { ok: true, data: deleted };
   } catch (error) {
     return toActionState(error);
   }
@@ -236,6 +250,19 @@ export async function saveProductAction(input: unknown, productId?: string): Pro
   }
 }
 
+export async function deleteProductAction(input: unknown): Promise<ActionState> {
+  try {
+    const user = await actor('manageProducts');
+    const parsed = z.object({ id: z.string().min(1) }).safeParse(input);
+    if (!parsed.success) throw new AppError('VALIDATION', 'Invalid product');
+    const deleted = await deleteProduct(parsed.data.id, { id: user.id, name: user.name });
+    refresh();
+    return { ok: true, data: deleted };
+  } catch (error) {
+    return toActionState(error);
+  }
+}
+
 export async function setProductStatusAction(input: {
   id: string;
   status: 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN' | 'ARCHIVED';
@@ -336,6 +363,19 @@ export async function toggleCategoryAction(input: { id: string; isActive: boolea
     });
     refresh();
     return { ok: true };
+  } catch (error) {
+    return toActionState(error);
+  }
+}
+
+export async function deleteCategoryAction(input: unknown): Promise<ActionState> {
+  try {
+    const user = await actor('manageCategories');
+    const parsed = z.object({ id: z.string().min(1) }).safeParse(input);
+    if (!parsed.success) throw new AppError('VALIDATION', 'Invalid category');
+    const deleted = await deleteCategory(parsed.data.id, { id: user.id, name: user.name });
+    refresh();
+    return { ok: true, data: deleted };
   } catch (error) {
     return toActionState(error);
   }
