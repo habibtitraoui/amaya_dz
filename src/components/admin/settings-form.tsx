@@ -13,7 +13,8 @@ type SectionField = {
   key: string;
   label: string;
   hint?: string;
-  type?: 'text' | 'number' | 'image';
+  placeholder?: string;
+  type?: 'text' | 'number' | 'email' | 'tel' | 'image';
   ltr?: boolean;
 };
 
@@ -32,6 +33,34 @@ function buildSections(labels: Dictionary['admin']['settings']): { title: string
       ],
     },
     {
+      title: labels.contactSection,
+      description: labels.contactDescription,
+      fields: [
+        { key: 'contact.address', label: labels.contactAddress, placeholder: labels.contactAddressPlaceholder },
+        { key: 'contact.hours', label: labels.contactHours, placeholder: labels.contactHoursPlaceholder },
+        { key: 'contact.phone', label: labels.contactPhone, type: 'tel', ltr: true, placeholder: '+213 555 00 00 00' },
+        { key: 'contact.email', label: labels.contactEmail, type: 'email', ltr: true, placeholder: 'contact@amaya.dz' },
+      ],
+    },
+    {
+      title: labels.socialSection,
+      description: labels.socialDescription,
+      fields: [
+        { key: 'contact.instagram', label: labels.socialInstagram, ltr: true, placeholder: 'https://instagram.com/amaya.dz' },
+        { key: 'contact.facebook', label: labels.socialFacebook, ltr: true, placeholder: 'https://facebook.com/amaya.dz' },
+        { key: 'contact.tiktok', label: labels.socialTiktok, ltr: true, placeholder: 'https://tiktok.com/@amaya.dz' },
+        {
+          key: 'contact.whatsapp',
+          label: labels.socialWhatsapp,
+          ltr: true,
+          placeholder: '+213 555 00 00 00',
+          hint: labels.socialWhatsappHint,
+        },
+        { key: 'contact.youtube', label: labels.socialYoutube, ltr: true, placeholder: 'https://youtube.com/@amaya' },
+        { key: 'contact.x', label: labels.socialX, ltr: true, placeholder: 'https://x.com/amaya_dz' },
+      ],
+    },
+    {
       title: labels.deliverySection,
       description: labels.deliveryDescription,
       fields: [
@@ -45,8 +74,8 @@ function buildSections(labels: Dictionary['admin']['settings']): { title: string
       fields: [
         { key: 'company.name', label: labels.companyName },
         { key: 'company.address', label: labels.companyAddress },
-        { key: 'company.phone', label: labels.companyPhone, ltr: true },
-        { key: 'company.email', label: labels.companyEmail, ltr: true },
+        { key: 'company.phone', label: labels.companyPhone, type: 'tel', ltr: true },
+        { key: 'company.email', label: labels.companyEmail, type: 'email', ltr: true },
         { key: 'company.rc', label: labels.companyRc, ltr: true },
         { key: 'company.nif', label: labels.companyNif, ltr: true },
         { key: 'company.ai', label: labels.companyAi, ltr: true },
@@ -166,6 +195,11 @@ export function SettingsForm({
   const stagedRef = React.useRef(stagedImages);
   stagedRef.current = stagedImages;
 
+  const persistedRef = React.useRef<Record<string, unknown>>({ ...values });
+  React.useEffect(() => {
+    persistedRef.current = { ...persistedRef.current, ...values };
+  }, [values]);
+
   // Release any remaining object URLs when the form unmounts.
   React.useEffect(
     () => () => {
@@ -225,11 +259,27 @@ export function SettingsForm({
       for (const staged of Object.values(stagedImages)) releaseStagedImage(staged);
       setStagedImages({});
       setDraft(resolved);
-      const payload = Object.fromEntries(
-        Object.entries(resolved).map(([key, value]) => [key, value.trim() === '' ? null : /^\d+$/.test(value) ? Number(value) : value]),
+
+      const fieldTypeByKey = new Map(
+        sections.flatMap((section) => section.fields.map((field) => [field.key, field.type ?? 'text'])),
       );
+      const payload: Record<string, string | number | null> = {};
+      for (const [key, rawValue] of Object.entries(resolved)) {
+        const trimmed = rawValue.trim();
+        const fieldType = fieldTypeByKey.get(key);
+        if (trimmed === '') {
+          const previous = persistedRef.current[key];
+          if (previous !== undefined && previous !== null) {
+            payload[key] = null;
+          }
+          continue;
+        }
+        payload[key] = fieldType === 'number' && /^\d+(\.\d+)?$/.test(trimmed) ? Number(trimmed) : trimmed;
+      }
+
       const result = await saveSettingsAction(payload);
       if (result.ok) {
+        persistedRef.current = { ...persistedRef.current, ...payload };
         setSaved(true);
         setTimeout(() => setSaved(false), 2200);
         router.refresh();
@@ -264,8 +314,17 @@ export function SettingsForm({
               ) : (
                 <Field key={field.key} label={field.label} hint={field.hint}>
                   <Input
-                    type={field.type === 'number' ? 'number' : 'text'}
+                    type={
+                      field.type === 'number'
+                        ? 'number'
+                        : field.type === 'email'
+                          ? 'email'
+                          : field.type === 'tel'
+                            ? 'tel'
+                            : 'text'
+                    }
                     value={draft[field.key] ?? ''}
+                    placeholder={field.placeholder}
                     onChange={(event) => setDraft({ ...draft, [field.key]: event.target.value })}
                     dir={field.ltr ? 'ltr' : undefined}
                   />

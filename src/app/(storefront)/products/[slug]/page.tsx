@@ -5,6 +5,7 @@ import { getLocale } from '@/lib/locale';
 import { getDictionary, t as interpolate } from '@/lib/i18n';
 import { getCurrentUser, getTier } from '@/lib/auth';
 import { getProductBySlug, getRelatedProducts } from '@/lib/services/catalog';
+import { getContactSettings } from '@/lib/settings';
 import { ProductDetail } from '@/components/storefront/product-detail';
 import { ProductCard, ProductGrid } from '@/components/storefront/product-card';
 import { SectionHeading } from '@/components/storefront/section-heading';
@@ -15,7 +16,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const locale = await getLocale();
   const dict = await getDictionary(locale);
-  const [tier, user] = await Promise.all([getTier(), getCurrentUser()]);
+  const [tier, user, contact] = await Promise.all([getTier(), getCurrentUser(), getContactSettings(dict)]);
   const product = await getProductBySlug(slug, locale, tier);
   if (!product) notFound();
 
@@ -75,7 +76,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         {[
           { icon: Truck, title: dict.home.trustDelivery, text: dict.home.trustDeliveryText },
           { icon: ShieldCheck, title: dict.home.trustQuality, text: dict.home.trustQualityText },
-          { icon: RotateCcw, title: dict.home.brandPoint2, text: dict.footer.hours },
+          { icon: RotateCcw, title: dict.home.brandPoint2, text: contact.hours },
         ].map((item) => (
           <div key={item.title} className="flex items-center gap-3 rounded-2xl border border-ink-100 bg-white px-4 py-3.5">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getLocale } from '@/lib/locale';
 import { getDictionary } from '@/lib/i18n';
 import { getCurrentUser } from '@/lib/auth';
+import { getContactSettings } from '@/lib/settings';
 import { LoginForm } from '@/components/auth/login-form';
 
 export const dynamic = 'force-dynamic';
@@ -22,12 +23,13 @@ const DEMO_ACCOUNTS = [
 export default async function LoginPage() {
   const locale = await getLocale();
   const dict = await getDictionary(locale);
-  const user = await getCurrentUser();
+  const [user, contact] = await Promise.all([getCurrentUser(), getContactSettings(dict)]);
   if (user) redirect(user.role === 'CUSTOMER' ? '/account' : '/admin');
 
   return (
     <LoginForm
       locale={locale}
+      contactEmailHref={contact.emailHref}
       labels={{
         title: dict.auth.loginTitle,
         subtitle: dict.auth.loginSubtitle,

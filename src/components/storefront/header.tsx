@@ -7,16 +7,23 @@ import { readCartCookie } from '@/app/actions/cart';
 import { type CurrentUser } from '@/lib/auth';
 import { MobileMenu } from '@/components/storefront/mobile-menu';
 import { cn } from '@/lib/utils';
+import { getContactSettings } from '@/lib/settings';
+import type { ContactSettings } from '@/lib/contact';
 
 export async function StoreHeader({
   locale,
   user,
+  contact,
 }: {
   locale: Locale;
   user: CurrentUser | null;
+  contact?: ContactSettings;
 }) {
   const dict = await getDictionary(locale);
-  const cart = await readCartCookie();
+  const [cart, resolvedContact] = await Promise.all([
+    readCartCookie(),
+    contact ? Promise.resolve(contact) : getContactSettings(dict),
+  ]);
   const count = cart.reduce((sum, line) => sum + line.quantity, 0);
 
   const nav = [
@@ -39,12 +46,12 @@ export async function StoreHeader({
             <span>{dict.home.trustDeliveryText}</span>
           </div>
           <div className="hidden items-center gap-5 sm:flex">
-            <a href="tel:+213555000000" className="inline-flex items-center gap-1.5 text-white/80 transition-colors hover:text-white">
+            <a href={resolvedContact.phoneHref} className="inline-flex items-center gap-1.5 text-white/80 transition-colors hover:text-white">
               <Phone className="h-3 w-3" />
-              <span dir="ltr">+213 555 00 00 00</span>
+              <span dir="ltr">{resolvedContact.phone}</span>
             </a>
             <span className="hidden text-white/40 md:inline">·</span>
-            <span className="hidden text-white/60 md:inline">{dict.footer.hours}</span>
+            <span className="hidden text-white/60 md:inline" dir="auto">{resolvedContact.hours}</span>
           </div>
         </div>
       </div>

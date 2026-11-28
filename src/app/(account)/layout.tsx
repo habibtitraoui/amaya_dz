@@ -9,6 +9,7 @@ import { CartProvider } from '@/components/cart-provider';
 import { readCartCookie } from '@/app/actions/cart';
 import { AccountNav } from '@/components/account/account-nav';
 import { logoutAction } from '@/app/actions/auth';
+import { getContactSettings } from '@/lib/settings';
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -17,7 +18,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
 
   const locale = await getLocale();
   const dict = await getDictionary(locale);
-  const cart = await readCartCookie();
+  const [cart, contact] = await Promise.all([readCartCookie(), getContactSettings(dict)]);
   const count = cart.reduce((sum, line) => sum + line.quantity, 0);
 
   const nav = [
@@ -31,7 +32,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   return (
     <CartProvider initialCount={count}>
       <div className="flex min-h-dvh flex-col">
-        <StoreHeader locale={locale} user={user} />
+        <StoreHeader locale={locale} user={user} contact={contact} />
         <main id="main" className="flex-1">
           <div className="container-page py-8">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -59,7 +60,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
             </div>
           </div>
         </main>
-        <StoreFooter locale={locale} dict={dict} />
+        <StoreFooter locale={locale} dict={dict} contact={contact} />
       </div>
     </CartProvider>
   );

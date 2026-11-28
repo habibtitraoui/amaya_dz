@@ -11,6 +11,7 @@ export function LoginForm({
   labels,
   demoAccounts,
   locale,
+  contactEmailHref = 'mailto:contact@amaya.dz',
 }: {
   labels: {
     title: string;
@@ -30,6 +31,7 @@ export function LoginForm({
   };
   demoAccounts: { role: string; email: string; password: string; tone: string }[];
   locale: string;
+  contactEmailHref?: string;
 }) {
   const router = useRouter();
   const [email, setEmail] = React.useState('');
@@ -133,7 +135,7 @@ export function LoginForm({
       <div className="mt-6 border-t border-ink-100 pt-4" id="pro">
         <p className="text-[12.5px] font-bold text-ink-800">{labels.noAccount}</p>
         <p className="mt-0.5 text-[12px] text-ink-500">{labels.noAccountText}</p>
-        <a href="mailto:contact@amaya.dz" className="mt-2 inline-block text-[12px] font-bold text-brand-600 hover:underline">
+        <a href={contactEmailHref} className="mt-2 inline-block text-[12px] font-bold text-brand-600 hover:underline">
           {labels.contactUs} →
         </a>
       </div>
