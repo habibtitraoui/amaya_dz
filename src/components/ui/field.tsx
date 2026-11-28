@@ -23,7 +23,7 @@ export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttrib
         ref={ref}
         className={cn(
           controlBase,
-          'h-11 cursor-pointer appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' fill=\'none\' stroke=\'%236b6e7b\' stroke-width=\'2\' stroke-linecap=\'round\'%3E%3Cpath d=\'m4 6 4 4 4-4\'/%3E%3C/svg%3E")] bg-[length:16px] bg-[right_12px_center] rtl:bg-[left_12px_center] bg-no-repeat pe-9',
+          'h-11 cursor-pointer appearance-none bg-[url(data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2716%27%20height=%2716%27%20fill=%27none%27%20stroke=%27%236b6e7b%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27m4%206%204%204%204-4%27/%3E%3C/svg%3E)] bg-[length:16px] bg-[position:right_12px_center] rtl:bg-[position:left_12px_center] bg-no-repeat pe-9',
           className,
         )}
         {...props}

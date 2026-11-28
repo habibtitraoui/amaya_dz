@@ -6,7 +6,8 @@ import { getDictionary, t as interpolate } from '@/lib/i18n';
 import { formatDA } from '@/lib/money';
 import { formatDateTime, cn } from '@/lib/utils';
 import { ORDER_STATUSES, type OrderStatus } from '@/lib/pricing';
-import { OrderStatusBadge, Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
+import { OrderStatusSelect } from '@/components/admin/order-status-select';
 
 export const dynamic = 'force-dynamic';
 
@@ -142,7 +143,13 @@ export default async function AdminOrdersPage({
                     {order.items.reduce((sum, item) => sum + item.quantity, 0)} {copy.unitAbbr}
                   </td>
                   <td className="px-4 py-3">
-                    <OrderStatusBadge status={order.status} label={dict.status[order.status as keyof typeof dict.status]} />
+                    <OrderStatusSelect
+                      orderId={order.id}
+                      status={order.status}
+                      statusLabels={dict.status}
+                      ariaLabel={copy.colStatus}
+                      errorLabel={copy.actionError}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     {order.invoices.length > 0 ? (

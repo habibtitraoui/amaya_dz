@@ -2,9 +2,9 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { ORDER_STATUS_TONE } from '@/lib/pricing';
 
-type Tone = 'brand' | 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'violet' | 'dark' | 'amber' | 'blue' | 'cyan' | 'indigo' | 'green' | 'red';
+export type Tone = 'brand' | 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'violet' | 'dark' | 'amber' | 'blue' | 'cyan' | 'indigo' | 'green' | 'red';
 
-const tones: Record<Tone, string> = {
+export const tones: Record<Tone, string> = {
   brand: 'bg-brand-50 text-brand-700 ring-brand-200',
   neutral: 'bg-ink-100 text-ink-700 ring-ink-200',
   success: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
