@@ -361,6 +361,7 @@ const frRaw = {
       supervisors: 'Superviseurs',
       settings: 'Paramètres',
       audit: 'Journal',
+      profile: 'Profil',
     },
     shell: {
       roleAdmin: 'Admin',
@@ -739,6 +740,14 @@ const frRaw = {
         managePrices: { label: 'Prix', description: 'Modifier les trois paliers tarifaires' },
         viewReports: { label: 'Rapports', description: 'Consulter les statistiques' },
       },
+    },
+    profile: {
+      title: 'Paramètres du profil',
+      subtitle: 'Gérez votre nom et votre mot de passe.',
+      infoTitle: 'Informations du compte',
+      roleLabel: 'Rôle',
+      updated: 'Profil mis à jour.',
+      error: 'Impossible de mettre à jour le profil.',
     },
     settings: {
       title: 'Paramètres',
