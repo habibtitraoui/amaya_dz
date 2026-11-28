@@ -406,7 +406,7 @@ export function ProductForm({
           </h2>
           <div className="space-y-2">
             {form.images.map((image, index) => (
-              <div key={index} className="flex items-center gap-2">
+              <div key={index} className="flex items-center gap-2 rounded-xl border border-ink-100 bg-ink-50/40 p-2">
                 <button
                   type="button"
                   onClick={() => setPrimary(index)}
@@ -420,67 +420,46 @@ export function ProductForm({
                 >
                   <Star className={cn('h-4 w-4', index === 0 && 'fill-amber-400')} />
                 </button>
-                <div className={cn('relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-ink-50', index === 0 && 'ring-2 ring-amber-400 ring-offset-1')}>
-                  {image.url && <Image src={image.url} alt="" fill sizes="40px" className="object-cover" unoptimized />}
+                <div className={cn('relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-ink-50', index === 0 && 'ring-2 ring-amber-400 ring-offset-1')}>
+                  {image.url && <Image src={image.url} alt="" fill sizes="48px" className="object-cover" unoptimized />}
                 </div>
-                <Input
-                  value={image.url}
-                  onChange={(e) =>
-                    setForm((c) => ({
-                      ...c,
-                      images: c.images.map((img, i) => {
-                        if (i !== index) return img;
-                        // Manual URL entry drops any staged file for this row.
-                        if (img.file) releaseStagedImage({ file: img.file, previewUrl: img.url });
-                        return { url: e.target.value, alt: img.alt };
-                      }),
-                    }))
-                  }
-                  placeholder="https://…"
-                  className="h-9 text-[11px]"
-                  dir="ltr"
-                />
-                <label
-                  className={cn(
-                    'grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-400 hover:bg-brand-50 hover:text-brand-600',
-                    uploading === index && 'pointer-events-none opacity-50',
-                  )}
-                  title={labels.chooseFileTitle}
-                  aria-label={labels.chooseImageAria}
-                >
-                  {uploading === index ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                  {fileInput(index)}
-                </label>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setForm((c) => {
-                      const removed = c.images[index];
-                      if (removed?.file) releaseStagedImage({ file: removed.file, previewUrl: removed.url });
-                      return { ...c, images: c.images.filter((_, i) => i !== index) };
-                    })
-                  }
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-400 hover:bg-red-50 hover:text-red-600"
-                  aria-label={labels.deleteImageAria}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                <div className="flex flex-1 items-center justify-end gap-1.5">
+                  <label
+                    className={cn(
+                      'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-ink-200 bg-white px-2.5 text-[11px] font-semibold text-ink-600 transition-colors hover:border-brand-300 hover:text-brand-600',
+                      uploading === index && 'pointer-events-none opacity-50',
+                    )}
+                    title={labels.chooseFileTitle}
+                    aria-label={labels.chooseImageAria}
+                  >
+                    {uploading === index ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                    {labels.chooseFileTitle}
+                    {fileInput(index)}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((c) => {
+                        const removed = c.images[index];
+                        if (removed?.file) releaseStagedImage({ file: removed.file, previewUrl: removed.url });
+                        return { ...c, images: c.images.filter((_, i) => i !== index) };
+                      })
+                    }
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-400 hover:bg-red-50 hover:text-red-600"
+                    aria-label={labels.deleteImageAria}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
-            <button
-              type="button"
-              onClick={() => setForm((c) => ({ ...c, images: [...c.images, { url: '' }] }))}
-              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-ink-200 py-2 text-[11px] font-bold text-ink-500 hover:border-brand-300 hover:text-brand-600"
-            >
-              <Plus className="h-3 w-3" /> {labels.addImageRow}
-            </button>
             <label
               className={cn(
-                'flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-ink-200 py-2 text-[11px] font-bold text-ink-500 hover:border-brand-300 hover:text-brand-600',
+                'flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-ink-200 py-2.5 text-[11.5px] font-bold text-ink-600 transition-colors hover:border-brand-300 hover:text-brand-600',
                 uploading === 'new' && 'pointer-events-none opacity-60',
               )}
             >
-              {uploading === 'new' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+              {uploading === 'new' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
               {uploading === 'new' ? labels.staging : labels.addFiles}
               {fileInput(null)}
             </label>

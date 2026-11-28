@@ -23,6 +23,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   const nav = [
     { href: '/account', label: dict.account.overview, icon: 'user' as const },
     { href: '/account/orders', label: dict.account.myOrders, icon: 'package' as const },
+    { href: '/account/settings', label: dict.account.profileSettings, icon: 'settings' as const },
     { href: '/products', label: dict.account.browseProducts, icon: 'bag' as const },
     { href: '/cart', label: dict.nav.cart, icon: 'cart' as const },
   ];

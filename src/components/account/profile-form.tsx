@@ -5,12 +5,15 @@ import { Loader2, Check } from 'lucide-react';
 import { updateOwnProfileAction } from '@/app/actions/account';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
+import { WilayaSelect } from '@/components/ui/wilaya-select';
 
 export function ProfileForm({
   initial,
+  locale,
   labels,
 }: {
   initial: { name: string; phone: string; businessName: string; address: string; city: string; wilaya: string };
+  locale?: string;
   labels: {
     name: string;
     phone: string;
@@ -18,6 +21,7 @@ export function ProfileForm({
     address: string;
     city: string;
     wilaya: string;
+    selectWilaya?: string;
     save: string;
     saving: string;
     updated: string;
@@ -79,7 +83,12 @@ export function ProfileForm({
           <Input value={form.city} onChange={(event) => set('city', event.target.value)} />
         </Field>
         <Field label={labels.wilaya}>
-          <Input value={form.wilaya} onChange={(event) => set('wilaya', event.target.value)} />
+          <WilayaSelect
+            value={form.wilaya}
+            onChange={(value) => set('wilaya', value)}
+            placeholder={labels.selectWilaya}
+            locale={locale}
+          />
         </Field>
       </div>
 

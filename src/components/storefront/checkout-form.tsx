@@ -8,6 +8,7 @@ import { placeOrderAction, finishCheckoutAction } from '@/app/actions/checkout';
 import type { Quote } from '@/lib/services/pricing-service';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Textarea } from '@/components/ui/field';
+import { WilayaSelect } from '@/components/ui/wilaya-select';
 import { cn } from '@/lib/utils';
 
 type Labels = {
@@ -20,6 +21,7 @@ type Labels = {
   addressPlaceholder: string;
   city: string;
   cityPlaceholder: string;
+  selectWilaya: string;
   notes: string;
   notesPlaceholder: string;
   deliveryMethod: string;
@@ -46,7 +48,7 @@ export function CheckoutForm({
   locale,
 }: {
   quote: Quote;
-  user: { name: string; email: string; phone: string | null } | null;
+  user: { name: string; email: string; phone: string | null; address?: string | null; wilaya?: string | null } | null;
   locale: string;
   labels: Labels;
 }) {
@@ -59,8 +61,8 @@ export function CheckoutForm({
   const [form, setForm] = React.useState({
     name: user?.name ?? '',
     phone: user?.phone ?? '',
-    address: '',
-    city: '',
+    address: user?.address ?? '',
+    city: user?.wilaya ?? '',
     notes: '',
   });
 
@@ -138,11 +140,11 @@ export function CheckoutForm({
               />
             </Field>
             <Field label={labels.city}>
-              <Input
+              <WilayaSelect
                 value={form.city}
-                onChange={(event) => set('city', event.target.value)}
-                placeholder={labels.cityPlaceholder}
-                autoComplete="address-level2"
+                onChange={(value) => set('city', value)}
+                placeholder={labels.selectWilaya}
+                locale={locale}
               />
             </Field>
           </div>

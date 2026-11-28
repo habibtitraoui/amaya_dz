@@ -1,15 +1,13 @@
 import Link from '@/components/ui/navigation-link';
-import { Package, Building2, BadgeCheck, ArrowRight, ShoppingBag } from 'lucide-react';
+import { Package, BadgeCheck, ArrowRight, ShoppingBag, Settings } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { getLocale } from '@/lib/locale';
 import { getDictionary, t as interpolate } from '@/lib/i18n';
 import { formatDA } from '@/lib/money';
 import { formatDate } from '@/lib/utils';
-import { Badge, OrderStatusBadge, TierBadge } from '@/components/ui/badge';
+import { OrderStatusBadge, TierBadge } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
-import { ProfileForm } from '@/components/account/profile-form';
-import { PasswordForm } from '@/components/account/password-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,58 +98,22 @@ export default async function AccountPage() {
         )}
       </section>
 
-      {/* account info */}
-      <div className="grid gap-5 lg:grid-cols-2">
-        <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
-          <h2 className="mb-4 flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.12em] text-ink-400">
-            <Building2 className="h-4 w-4 text-brand-500" />
-            {dict.account.info}
-          </h2>
-          <ProfileForm
-            initial={{
-              name: record?.name ?? user.name,
-              phone: record?.phone ?? '',
-              businessName: record?.profile?.businessName ?? '',
-              address: record?.profile?.address ?? '',
-              city: record?.profile?.city ?? '',
-              wilaya: record?.profile?.wilaya ?? '',
-            }}
-            labels={{
-              name: dict.common.name,
-              phone: dict.common.phone,
-              businessName: dict.account.businessName,
-              address: dict.common.address,
-              city: dict.common.city,
-              wilaya: dict.common.wilaya,
-              save: dict.common.save,
-              saving: dict.common.saving,
-              updated: dict.account.profileUpdated,
-              error: dict.common.error,
-              tier: dict.account.customerType,
-              tierValue: dict.tier[user.tier as 'WHOLESALE' | 'SUPER_WHOLESALE'] ?? dict.tier.RETAIL,
-              tierNote: dict.account.cannotChangeTier,
-              email: dict.common.email,
-              emailValue: user.email,
-            }}
-          />
-        </section>
-
-        <section className="rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
-          <h2 className="mb-4 text-[13px] font-bold uppercase tracking-[0.12em] text-ink-400">{dict.auth.changePassword}</h2>
-          <PasswordForm
-            labels={{
-              current: dict.auth.currentPassword,
-              next: dict.auth.newPassword,
-              confirm: dict.auth.confirmPassword,
-              save: dict.common.save,
-              mismatch: dict.auth.passwordMismatch,
-              tooShort: dict.auth.passwordTooShort,
-              wrong: dict.auth.passwordWrong,
-              changed: dict.auth.passwordChanged,
-            }}
-          />
-        </section>
-      </div>
+      {/* profile settings shortcut */}
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-ink-100 bg-white p-5 shadow-card">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+            <Settings className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-[14px] font-bold text-ink-900">{dict.account.profileSettings}</h2>
+            <p className="mt-0.5 text-[12px] text-ink-500">{dict.account.profileSettingsSubtitle}</p>
+          </div>
+        </div>
+        <ButtonLink href="/account/settings" variant="outline" size="sm">
+          {dict.account.profileSettings}
+          <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
+        </ButtonLink>
+      </section>
     </div>
   );
 }

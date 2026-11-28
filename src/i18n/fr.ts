@@ -63,6 +63,7 @@ const frRaw = {
     address: 'Adresse',
     city: 'Ville',
     wilaya: 'Wilaya',
+    selectWilaya: 'Sélectionner une wilaya',
     notes: 'Notes',
     details: 'Détails',
     view: 'Voir',
@@ -121,6 +122,7 @@ const frRaw = {
   },
   product: {
     addToCart: 'Ajouter au panier',
+    buyNow: 'Commander maintenant',
     added: 'Ajouté au panier',
     outOfStock: 'Rupture de stock',
     inStock: 'En stock',
@@ -263,6 +265,8 @@ const frRaw = {
   account: {
     title: 'Mon compte',
     overview: 'Vue d’ensemble',
+    profileSettings: 'Paramètres du profil',
+    profileSettingsSubtitle: 'Gérez vos informations personnelles, votre adresse et votre mot de passe.',
     info: 'Informations du compte',
     customerType: 'Type de client',
     businessName: 'Raison sociale',

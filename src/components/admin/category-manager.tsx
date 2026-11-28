@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Plus, Loader2, Pencil, FolderTree, EyeOff, Eye, Upload } from 'lucide-react';
+import { Plus, Loader2, Pencil, FolderTree, EyeOff, Eye, Upload, Trash2 } from 'lucide-react';
 import { saveCategoryAction, toggleCategoryAction } from '@/app/actions/admin';
 import { releaseStagedImage, stageImageFile, uploadStagedImage, type StagedImage } from '@/lib/upload';
 import { Button } from '@/components/ui/button';
@@ -227,37 +227,53 @@ export function CategoryManager({
               </div>
 
               <Field label={labels.imageLabel}>
-                <div className="flex gap-2">
-                  <Input
-                    value={editing.image}
-                    onChange={(event) => {
-                      releaseStagedImage(stagedImage);
-                      setStagedImage(null);
-                      setEditing({ ...editing, image: event.target.value });
-                    }}
-                    placeholder="https://…"
-                    dir="ltr"
-                  />
-                  <label
-                    className={cn(
-                      'grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-ink-200 text-ink-500 hover:border-brand-300 hover:text-brand-600',
-                      staging && 'pointer-events-none opacity-50',
+                <div className="flex items-center gap-3">
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-ink-100 bg-ink-50">
+                    {editing.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- remote or local blob preview
+                      <img src={editing.image} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-ink-300">
+                        <Upload className="h-4 w-4" />
+                      </div>
                     )}
-                    title={labels.chooseFileTitle}
-                    aria-label={labels.chooseImageAria}
-                  >
-                    {staging ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                    <input
-                      type="file"
-                      accept="image/webp,image/jpeg,image/png,image/avif"
-                      className="hidden"
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        event.target.value = '';
-                        if (file) void handleUpload(file);
-                      }}
-                    />
-                  </label>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label
+                      className={cn(
+                        'inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-ink-200 px-3.5 py-2 text-[12px] font-semibold text-ink-600 transition-colors hover:border-brand-300 hover:text-brand-600',
+                        staging && 'pointer-events-none opacity-50',
+                      )}
+                      title={labels.chooseFileTitle}
+                      aria-label={labels.chooseImageAria}
+                    >
+                      {staging ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                      {labels.chooseFileTitle}
+                      <input
+                        type="file"
+                        accept="image/webp,image/jpeg,image/png,image/avif"
+                        className="hidden"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          event.target.value = '';
+                          if (file) void handleUpload(file);
+                        }}
+                      />
+                    </label>
+                    {editing.image && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          releaseStagedImage(stagedImage);
+                          setStagedImage(null);
+                          setEditing({ ...editing, image: '' });
+                        }}
+                        className="rounded-lg px-2 py-1 text-[11.5px] font-semibold text-ink-400 hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </Field>
               <div className="grid grid-cols-2 gap-3">

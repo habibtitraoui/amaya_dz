@@ -2,10 +2,10 @@
 
 import Link from '@/components/ui/navigation-link';
 import { usePathname } from 'next/navigation';
-import { User, Package, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { User, Package, ShoppingBag, ShoppingCart, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const ICONS = { user: User, package: Package, bag: ShoppingBag, cart: ShoppingCart } as const;
+const ICONS = { user: User, package: Package, bag: ShoppingBag, cart: ShoppingCart, settings: Settings } as const;
 
 export function AccountNav({ items }: { items: { href: string; label: string; icon: keyof typeof ICONS }[] }) {
   const pathname = usePathname();
