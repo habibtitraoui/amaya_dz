@@ -62,6 +62,40 @@ export async function updateOwnProfileAction(input: unknown) {
   return { ok: true as const };
 }
 
+const staffProfileSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+});
+
+/**
+ * Staff (admin / supervisor) can edit their own display name only. Role,
+ * email and permissions are deliberately NOT accepted by this action.
+ */
+export async function updateOwnStaffProfileAction(input: unknown) {
+  const user = await getCurrentUser();
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERVISOR')) {
+    return { ok: false as const, error: 'Unauthorized' };
+  }
+  const parsed = staffProfileSchema.safeParse(input);
+  if (!parsed.success) return { ok: false as const, error: 'Invalid data' };
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { name: parsed.data.name },
+  });
+
+  await logAudit({
+    actorId: user.id,
+    actorName: parsed.data.name,
+    action: 'account.update',
+    entityType: 'User',
+    entityId: user.id,
+    summary: 'Staff updated their own profile name',
+  });
+
+  revalidatePath('/admin/profile');
+  return { ok: true as const };
+}
+
 export async function cancelOwnOrderAction(orderId: string) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'CUSTOMER') return { ok: false as const, error: 'Unauthorized' };

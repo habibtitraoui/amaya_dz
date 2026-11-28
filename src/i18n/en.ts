@@ -353,6 +353,7 @@ const en: DictionaryShape = {
       supervisors: 'Supervisors',
       settings: 'Settings',
       audit: 'Audit log',
+      profile: 'Profile',
     },
     shell: {
       roleAdmin: 'Admin',
@@ -731,6 +732,14 @@ const en: DictionaryShape = {
         managePrices: { label: 'Prices', description: 'Edit all three pricing tiers' },
         viewReports: { label: 'Reports', description: 'View analytics and reports' },
       },
+    },
+    profile: {
+      title: 'Profile settings',
+      subtitle: 'Manage your name and password.',
+      infoTitle: 'Account info',
+      roleLabel: 'Role',
+      updated: 'Profile updated.',
+      error: 'Could not update the profile.',
     },
     settings: {
       title: 'Settings',

@@ -353,6 +353,7 @@ const ar: DictionaryShape = {
       supervisors: 'المشرفون',
       settings: 'الإعدادات',
       audit: 'السجل',
+      profile: 'الملف الشخصي',
     },
     shell: {
       roleAdmin: 'مدير',
@@ -731,6 +732,14 @@ const ar: DictionaryShape = {
         managePrices: { label: 'الأسعار', description: 'تعديل مستويات التسعير الثلاثة' },
         viewReports: { label: 'التقارير', description: 'الاطلاع على الإحصائيات' },
       },
+    },
+    profile: {
+      title: 'إعدادات الملف الشخصي',
+      subtitle: 'إدارة اسمك وكلمة المرور.',
+      infoTitle: 'معلومات الحساب',
+      roleLabel: 'الدور',
+      updated: 'تم تحديث الملف الشخصي.',
+      error: 'تعذّر تحديث الملف الشخصي.',
     },
     settings: {
       title: 'الإعدادات',

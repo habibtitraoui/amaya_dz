@@ -18,6 +18,7 @@ import {
   ScrollText,
   LogOut,
   Menu,
+  User,
   X,
   ExternalLink,
 } from 'lucide-react';
@@ -57,6 +58,7 @@ const NAV: {
   { href: '/admin/supervisors', key: 'supervisors', icon: Shield, permission: 'admin' },
   { href: '/admin/settings', key: 'settings', icon: Settings, permission: 'admin' },
   { href: '/admin/audit', key: 'audit', icon: ScrollText, permission: 'audit' },
+  { href: '/admin/profile', key: 'profile', icon: User, permission: null },
 ];
 
 export function AdminShell({
@@ -120,13 +122,19 @@ export function AdminShell({
           {labels.shell.viewStore}
         </Link>
         <div className="flex items-center gap-2.5 rounded-xl bg-white/5 p-2.5">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-500 text-[11px] font-bold text-white">
-            {initials(user.name)}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[11.5px] font-semibold text-white">{user.name}</p>
-            <p className="truncate text-[10px] text-white/40" dir="ltr">{user.email}</p>
-          </div>
+          <Link
+            href="/admin/profile"
+            aria-label={labels.nav.profile}
+            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg"
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-500 text-[11px] font-bold text-white">
+              {initials(user.name)}
+            </span>
+            <span className="block min-w-0 flex-1">
+              <span className="block truncate text-[11.5px] font-semibold text-white">{user.name}</span>
+              <span className="block truncate text-[10px] text-white/40" dir="ltr">{user.email}</span>
+            </span>
+          </Link>
           <form action={logoutAction}>
             <button type="submit" aria-label={labels.shell.logout} className="grid h-7 w-7 place-items-center rounded-lg text-white/40 hover:bg-white/10 hover:text-white">
               <LogOut className="h-3.5 w-3.5 rtl:rotate-180" />
