@@ -242,8 +242,6 @@ const en: DictionaryShape = {
     noAccount: 'Business accounts are created by AMAYA.',
     noAccountText: 'Are you a reseller? Ask us to open your account.',
     contactUs: 'Contact us',
-    demoTitle: 'Demo accounts',
-    demoText: 'Use one of the accounts below to explore the platform.',
     logoutSuccess: 'You have been signed out.',
     changePassword: 'Change password',
     currentPassword: 'Current password',

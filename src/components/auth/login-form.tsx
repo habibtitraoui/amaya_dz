@@ -2,15 +2,13 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, LogIn, Mail, Lock, Sparkles } from 'lucide-react';
+import { Loader2, LogIn, Mail, Lock } from 'lucide-react';
 import { loginAction } from '@/app/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 
 export function LoginForm({
   labels,
-  demoAccounts,
-  locale,
   contactEmailHref = 'mailto:contact@amaya.dz',
 }: {
   labels: {
@@ -26,11 +24,7 @@ export function LoginForm({
     noAccount: string;
     noAccountText: string;
     contactUs: string;
-    demoTitle: string;
-    demoText: string;
   };
-  demoAccounts: { role: string; email: string; password: string; tone: string }[];
-  locale: string;
   contactEmailHref?: string;
 }) {
   const router = useRouter();
@@ -58,12 +52,6 @@ export function LoginForm({
     } finally {
       setPending(false);
     }
-  }
-
-  function fill(account: (typeof demoAccounts)[number]) {
-    setEmail(account.email);
-    setPassword(account.password);
-    setError(null);
   }
 
   return (
@@ -110,27 +98,6 @@ export function LoginForm({
           {pending ? labels.signingIn : labels.signIn}
         </Button>
       </form>
-
-      <div className="mt-7 rounded-2xl border border-dashed border-ink-200 bg-ink-50/50 p-4">
-        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-400">
-          <Sparkles className="h-3 w-3 text-brand-500" />
-          {labels.demoTitle}
-        </p>
-        <p className="mt-1 text-[11.5px] text-ink-500">{labels.demoText}</p>
-        <div className="mt-3 grid gap-1.5">
-          {demoAccounts.map((account) => (
-            <button
-              key={account.email}
-              type="button"
-              onClick={() => fill(account)}
-              className="flex items-center justify-between gap-2 rounded-lg bg-white px-2.5 py-1.5 text-start ring-1 ring-ink-100 transition-colors hover:ring-brand-200"
-            >
-              <span className="text-[11px] font-bold text-ink-700">{account.role}</span>
-              <span className="truncate text-[10.5px] text-ink-400" dir="ltr">{account.email}</span>
-            </button>
-          ))}
-        </div>
-      </div>
 
       <div className="mt-6 border-t border-ink-100 pt-4" id="pro">
         <p className="text-[12.5px] font-bold text-ink-800">{labels.noAccount}</p>

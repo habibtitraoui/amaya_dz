@@ -242,8 +242,6 @@ const ar: DictionaryShape = {
     noAccount: 'الحسابات المهنية تُنشأ من قبل أمايا.',
     noAccountText: 'هل أنت موزع؟ اطلب إنشاء حسابك بالتواصل معنا.',
     contactUs: 'اتصل بنا',
-    demoTitle: 'حسابات تجريبية',
-    demoText: 'استخدم أحد الحسابات أدناه لاستكشاف المنصة.',
     logoutSuccess: 'تم تسجيل الخروج.',
     changePassword: 'تغيير كلمة المرور',
     currentPassword: 'كلمة المرور الحالية',
