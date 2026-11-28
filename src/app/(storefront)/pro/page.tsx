@@ -6,6 +6,7 @@ import { getDictionary, translate, type Locale } from '@/lib/i18n';
 import { prisma } from '@/lib/prisma';
 import { formatDA } from '@/lib/money';
 import { TIERS, TIER_LABEL } from '@/lib/pricing';
+import { getContactSettings } from '@/lib/settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -129,11 +130,7 @@ export default async function ProPage() {
   const locale = await getLocale();
   const dict = await getDictionary(locale);
   const copy = COPY[locale];
-  const example = await ladder('AMY-AP-001', locale);
-
-  const phone = process.env.BUSINESS_PHONE ?? '+213 555 00 00 00';
-  const email = process.env.BUSINESS_EMAIL ?? 'contact@amaya.dz';
-  const address = process.env.BUSINESS_ADDRESS ?? dict.footer.location;
+  const [example, contact] = await Promise.all([ladder('AMY-AP-001', locale), getContactSettings(dict)]);
 
   return (
     <div className="bg-white">
@@ -148,7 +145,7 @@ export default async function ProPage() {
           <h1 className="mt-5 max-w-2xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl">{copy.hero}</h1>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/60">{copy.subtitle}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href={`tel:${phone.replace(/\s/g, '')}`} className="btn-brand h-11 px-6 text-[13px]">
+            <a href={contact.phoneHref} className="btn-brand h-11 px-6 text-[13px]">
               <Phone className="h-4 w-4" /> {copy.contact}
             </a>
             <Link
@@ -238,16 +235,18 @@ export default async function ProPage() {
       <section className="container-page pb-16">
         <div className="rounded-3xl bg-ink-950 p-8 sm:p-10">
           <h2 className="text-xl font-extrabold text-white">{copy.contact}</h2>
-          <p className="mt-2 text-[13px] text-white/60">{copy.contactText}</p>
+          <p className="mt-2 text-[13px] text-white/60" dir="auto">
+            {contact.hasCustomHours ? contact.hours : copy.contactText}
+          </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <a href={`tel:${phone.replace(/\s/g, '')}`} className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-3 text-[13px] font-semibold text-white ring-1 ring-white/10 transition-colors hover:bg-white/10">
-              <Phone className="h-4 w-4 text-brand-400" /> <span dir="ltr">{phone}</span>
+            <a href={contact.phoneHref} className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-3 text-[13px] font-semibold text-white ring-1 ring-white/10 transition-colors hover:bg-white/10">
+              <Phone className="h-4 w-4 shrink-0 text-brand-400" /> <span dir="ltr">{contact.phone}</span>
             </a>
-            <a href={`mailto:${email}`} className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-3 text-[13px] font-semibold text-white ring-1 ring-white/10 transition-colors hover:bg-white/10">
-              <Mail className="h-4 w-4 text-brand-400" /> {email}
+            <a href={contact.emailHref} className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-3 text-[13px] font-semibold text-white ring-1 ring-white/10 transition-colors hover:bg-white/10">
+              <Mail className="h-4 w-4 shrink-0 text-brand-400" /> <span dir="ltr">{contact.email}</span>
             </a>
             <div className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-3 text-[13px] font-semibold text-white ring-1 ring-white/10">
-              <MapPin className="h-4 w-4 text-brand-400" /> {address}
+              <MapPin className="h-4 w-4 shrink-0 text-brand-400" /> <span dir="auto">{contact.address}</span>
             </div>
           </div>
         </div>

@@ -1,24 +1,63 @@
 import Link from '@/components/ui/navigation-link';
-import { MapPin, Phone, Mail, Clock, Instagram, Facebook } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { LogoLockup } from '@/components/storefront/logo';
+import { SocialIcon } from '@/components/storefront/social-icon';
+import { resolveContactSettings, type ContactSettings } from '@/lib/contact';
 import type { Dictionary, Locale } from '@/lib/i18n';
 
-export function StoreFooter({ locale, dict }: { locale: Locale; dict: Dictionary }) {
+export function StoreFooter({
+  locale,
+  dict,
+  contact,
+}: {
+  locale: Locale;
+  dict: Dictionary;
+  contact?: ContactSettings;
+}) {
   const year = new Date().getFullYear();
+  const resolved =
+    contact ?? resolveContactSettings({}, { location: dict.footer.location, hours: dict.footer.hours });
+
   return (
     <footer className="mt-20 bg-ink-950 text-white">
       <div className="container-page grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <LogoLockup />
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-white/60">{dict.footer.about}</p>
-          <div className="mt-5 flex gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-white/5 text-white/60 ring-1 ring-white/10">
-              <Instagram className="h-3.5 w-3.5" />
-            </span>
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-white/5 text-white/60 ring-1 ring-white/10">
-              <Facebook className="h-3.5 w-3.5" />
-            </span>
-          </div>
+          {(resolved.socialLinks.length > 0 || !resolved.hasSocialConfig) && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {resolved.socialLinks.length > 0 ? (
+                resolved.socialLinks.map((item) => (
+                  <a
+                    key={item.platform}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={item.label}
+                    title={item.label}
+                    className="grid h-8 w-8 place-items-center rounded-full bg-white/5 text-white/60 ring-1 ring-white/10 transition-colors hover:bg-brand-500 hover:text-white hover:ring-brand-500"
+                  >
+                    <SocialIcon platform={item.platform} className="h-3.5 w-3.5" />
+                  </a>
+                ))
+              ) : (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="grid h-8 w-8 place-items-center rounded-full bg-white/5 text-white/60 ring-1 ring-white/10"
+                  >
+                    <SocialIcon platform="instagram" className="h-3.5 w-3.5" />
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="grid h-8 w-8 place-items-center rounded-full bg-white/5 text-white/60 ring-1 ring-white/10"
+                  >
+                    <SocialIcon platform="facebook" className="h-3.5 w-3.5" />
+                  </span>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-2">
@@ -44,10 +83,26 @@ export function StoreFooter({ locale, dict }: { locale: Locale; dict: Dictionary
         <div className="lg:col-span-4">
           <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.25em] text-brand-400">{dict.footer.contact}</h3>
           <ul className="space-y-2.5 text-[13px] text-white/65">
-            <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-white/40" /> {dict.footer.location}</li>
-            <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-white/40" /> <span dir="ltr">+213 555 00 00 00</span></li>
-            <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-white/40" /> contact@amaya.dz</li>
-            <li className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-white/40" /> {dict.footer.hours}</li>
+            <li className="flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-white/40" />
+              <span dir="auto">{resolved.address}</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Phone className="h-3.5 w-3.5 shrink-0 text-white/40" />
+              <a href={resolved.phoneHref} className="transition-colors hover:text-white" dir="ltr">
+                {resolved.phone}
+              </a>
+            </li>
+            <li className="flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5 shrink-0 text-white/40" />
+              <a href={resolved.emailHref} className="transition-colors hover:text-white" dir="ltr">
+                {resolved.email}
+              </a>
+            </li>
+            <li className="flex items-center gap-2">
+              <Clock className="h-3.5 w-3.5 shrink-0 text-white/40" />
+              <span dir="auto">{resolved.hours}</span>
+            </li>
           </ul>
         </div>
       </div>

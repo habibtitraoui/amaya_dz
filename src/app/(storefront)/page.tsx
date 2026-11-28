@@ -10,16 +10,18 @@ import {
   Package,
   TrendingUp,
   Star,
+  MapPin,
 } from 'lucide-react';
 import { getLocale } from '@/lib/locale';
 import { getDictionary, t as interpolate } from '@/lib/i18n';
 import { getTier } from '@/lib/auth';
 import { getHomepageData } from '@/lib/services/catalog';
-import { getHeroImage } from '@/lib/settings';
+import { getContactSettings, getHeroImage } from '@/lib/settings';
 import { ProductCard, ProductGrid } from '@/components/storefront/product-card';
 import { ButtonLink } from '@/components/ui/button';
 import { SectionHeading } from '@/components/storefront/section-heading';
 import { CategoryTile } from '@/components/storefront/category-tile';
+import { SocialIcon } from '@/components/storefront/social-icon';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +29,11 @@ export default async function HomePage() {
   const locale = await getLocale();
   const dict = await getDictionary(locale);
   const tier = await getTier();
-  const [data, heroImage] = await Promise.all([getHomepageData(locale, tier), getHeroImage()]);
+  const [data, heroImage, contact] = await Promise.all([
+    getHomepageData(locale, tier),
+    getHeroImage(),
+    getContactSettings(dict),
+  ]);
 
   const cardLabels = {
     outOfStock: dict.product.outOfStock,
@@ -242,10 +248,24 @@ export default async function HomePage() {
             <div className="relative flex flex-col items-start gap-5">
               <Image src="/brand/amaya-logo-white.png" alt="AMAYA" width={1600} height={237} className="h-11 w-auto" />
               <p className="text-[11px] font-bold uppercase tracking-[0.42em] text-white/70">Premium Accessories</p>
-              <p className="mt-4 text-[13.5px] leading-relaxed text-white/85">{dict.home.contactText}</p>
+              <p className="mt-4 text-[13.5px] leading-relaxed text-white/85" dir="auto">
+                {contact.hasCustomHours ? contact.hours : dict.home.contactText}
+              </p>
               <div className="mt-2 flex flex-wrap gap-2 text-[12px] font-semibold text-white">
-                <span className="rounded-full bg-white/15 px-3 py-1.5" dir="ltr">+213 555 00 00 00</span>
-                <span className="rounded-full bg-white/15 px-3 py-1.5">contact@amaya.dz</span>
+                <a
+                  href={contact.phoneHref}
+                  className="rounded-full bg-white/15 px-3 py-1.5 transition-colors hover:bg-white/25"
+                  dir="ltr"
+                >
+                  {contact.phone}
+                </a>
+                <a
+                  href={contact.emailHref}
+                  className="rounded-full bg-white/15 px-3 py-1.5 transition-colors hover:bg-white/25"
+                  dir="ltr"
+                >
+                  {contact.email}
+                </a>
               </div>
             </div>
           </div>
@@ -256,15 +276,38 @@ export default async function HomePage() {
       <section id="contact" className="container-page pb-20">
         <div className="flex flex-col items-center gap-3 rounded-3xl border border-ink-100 bg-white px-6 py-12 text-center shadow-card">
           <h2 className="text-xl font-extrabold text-ink-900 sm:text-2xl">{dict.home.contactTitle}</h2>
-          <p className="max-w-md text-[14px] text-ink-500">{dict.home.contactText}</p>
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
-            <ButtonLink href="tel:+213555000000" variant="dark">
-              +213 555 00 00 00
+          <p className="max-w-md text-[14px] text-ink-500" dir="auto">
+            {contact.hasCustomHours ? contact.hours : dict.home.contactText}
+          </p>
+          <p className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-500">
+            <MapPin className="h-3.5 w-3.5 text-brand-500" />
+            <span dir="auto">{contact.address}</span>
+          </p>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+            <ButtonLink href={contact.phoneHref} variant="dark">
+              <span dir="ltr">{contact.phone}</span>
             </ButtonLink>
-            <ButtonLink href="mailto:contact@amaya.dz" variant="outline">
-              contact@amaya.dz
+            <ButtonLink href={contact.emailHref} variant="outline">
+              <span dir="ltr">{contact.email}</span>
             </ButtonLink>
           </div>
+          {contact.socialLinks.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+              {contact.socialLinks.map((item) => (
+                <a
+                  key={item.platform}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={item.label}
+                  title={item.label}
+                  className="grid h-9 w-9 place-items-center rounded-full border border-ink-200 bg-ink-50 text-ink-600 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600"
+                >
+                  <SocialIcon platform={item.platform} className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>
