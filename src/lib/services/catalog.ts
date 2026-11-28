@@ -1,5 +1,6 @@
 import 'server-only';
 import { prisma } from '@/lib/prisma';
+import { AppError } from '@/lib/errors';
 import { type Locale, translate } from '@/lib/i18n';
 import { type Tier } from '@/lib/pricing';
 import { toProductCard, toProductView } from '@/lib/serializers';
@@ -165,6 +166,38 @@ export async function getCategoryBySlug(slug: string, locale: Locale) {
     image: row.image,
     productCount: row._count.products,
   };
+}
+
+/** Categories with products are kept intact until their products are moved or
+ * removed. This avoids deleting a whole catalogue accidentally and matches the
+ * database restriction on Product.categoryId. */
+export async function deleteCategory(categoryId: string, actor: { id: string; name: string }) {
+  return prisma.$transaction(async (tx) => {
+    const category = await tx.category.findUnique({
+      where: { id: categoryId },
+      include: { translations: true },
+    });
+    if (!category) throw new AppError('NOT_FOUND', 'Category not found');
+
+    const productCount = await tx.product.count({ where: { categoryId } });
+    if (productCount > 0) {
+      throw new AppError('CONFLICT', 'Delete or move the products in this category before deleting the category');
+    }
+
+    await tx.category.delete({ where: { id: categoryId } });
+    await tx.auditLog.create({
+      data: {
+        actorId: actor.id,
+        actorName: actor.name,
+        action: 'category.delete',
+        entityType: 'Category',
+        entityId: categoryId,
+        summary: `Category ${translate(category.translations, 'fr') || category.slug} deleted`,
+      },
+    });
+
+    return { id: category.id, slug: category.slug };
+  });
 }
 
 export async function getHomepageData(locale: Locale, tier: Tier) {

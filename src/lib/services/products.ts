@@ -374,6 +374,42 @@ export async function toggleFeatured(productId: string, featured: boolean, actor
   return product;
 }
 
+/**
+ * Permanently remove a product while preserving historical order snapshots.
+ * Product and variant references on OrderItem are nullable by design, so the
+ * order keeps its captured name, SKU and price after the catalogue row goes.
+ */
+export async function deleteProduct(productId: string, actor: Actor) {
+  return prisma.$transaction(async (tx) => {
+    const product = await tx.product.findUnique({
+      where: { id: productId },
+      select: { id: true, sku: true, variants: { select: { reservedQuantity: true } } },
+    });
+    if (!product) throw new AppError('NOT_FOUND', 'Product not found');
+
+    // Deleting a reserved variant would make it impossible to release the
+    // reservation when its order is cancelled. Ask staff to resolve the order
+    // first instead of silently corrupting the stock ledger.
+    if (product.variants.some((variant) => variant.reservedQuantity > 0)) {
+      throw new AppError('CONFLICT', 'This product cannot be deleted while stock is reserved by an active order');
+    }
+
+    await tx.product.delete({ where: { id: productId } });
+    await tx.auditLog.create({
+      data: {
+        actorId: actor.id,
+        actorName: actor.name,
+        action: 'product.delete',
+        entityType: 'Product',
+        entityId: productId,
+        summary: `Product ${product.sku} deleted`,
+      },
+    });
+
+    return { id: product.id, sku: product.sku };
+  });
+}
+
 export async function getProductForEdit(productId: string) {
   return prisma.product.findUnique({
     where: { id: productId },

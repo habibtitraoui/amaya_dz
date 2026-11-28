@@ -144,7 +144,7 @@ After Step 3, your Neon database has all 16 tables migrated, **but zero users**.
 
 ### Option 4A — Clean Production Bootstrap (Recommended for Live Store)
 
-> *Why choose 4A for production?* `npm run db:seed` creates sample orders (`AMY-YYYY-00001..3`) and a sample invoice (`FAC-YYYY-00001`). Because invoices in AMAYA are **immutable financial records** and cannot be deleted from the UI, bootstrapping only your real Admin account keeps your invoice numbering (`FAC-YYYY-00001`) 100% clean.
+> *Why choose 4A for production?* `npm run db:seed` creates sample orders (`AMY-YYYY-00001..3`) and a sample invoice (`FAC-YYYY-00001`). Invoices are immutable once issued, but deleting an order also removes its linked invoice and invoice lines, so bootstrapping only your real Admin account keeps your invoice numbering (`FAC-YYYY-00001`) 100% clean.
 
 From a local clone of the repo (with `npm install` completed), run this one-liner using your Neon **Direct** URL and your desired admin email/password:
 

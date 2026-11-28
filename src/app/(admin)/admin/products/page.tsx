@@ -7,6 +7,7 @@ import { getDictionary, translate, t as interpolate } from '@/lib/i18n';
 import { formatDA } from '@/lib/money';
 import { Badge } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
+import { DeleteConfirmButton } from '@/components/admin/delete-confirm-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,6 +104,7 @@ export default async function AdminProductsPage({
                 <th className="px-4 py-2.5 text-end font-bold">{copy.colSuperWholesale}</th>
                 <th className="px-4 py-2.5 text-center font-bold">{copy.colStock}</th>
                 <th className="px-4 py-2.5 text-start font-bold">{copy.colStatus}</th>
+                <th className="px-4 py-2.5 text-end font-bold">{copy.colActions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-100">
@@ -147,12 +149,30 @@ export default async function AdminProductsPage({
                         {dict.productStatus[product.status as keyof typeof dict.productStatus]}
                       </Badge>
                     </td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex justify-end">
+                        <DeleteConfirmButton
+                          entity="product"
+                          entityId={product.id}
+                          entityName={translate(product.translations, locale) || product.sku}
+                          labels={{
+                            ariaLabel: copy.deleteAria,
+                            title: copy.deleteTitle,
+                            message: copy.deleteMessage,
+                            confirm: copy.deleteConfirm,
+                            cancel: copy.deleteCancel,
+                            deleting: copy.deletePending,
+                            error: copy.deleteError,
+                          }}
+                        />
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
               {products.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center">
+                  <td colSpan={8} className="px-4 py-16 text-center">
                     <Package className="mx-auto h-7 w-7 text-ink-300" />
                     <p className="mt-2 text-[12.5px] text-ink-400">{copy.empty}</p>
                   </td>

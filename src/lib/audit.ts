@@ -12,8 +12,8 @@ export type AuditInput = {
 };
 
 /**
- * Every administrative mutation goes through here. The table is append-only:
- * no update/delete path exists in the application.
+ * Every administrative mutation goes through here. Audit rows are append-only:
+ * business records may be deleted, but their audit trail is retained.
  */
 export async function logAudit(input: AuditInput) {
   try {
